@@ -1,19 +1,69 @@
-<!-- index.html 의 head (혹은 body 끝) -->
-<link rel="stylesheet" href="/styles.css">
-<script src="/app.js" defer></script>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>aqua.ai — 바다의 색을 되돌리는 AI 보정</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="sitebar">
+    <div class="container nav">
+      <div class="brand"><a href="/">aqua.ai</a></div>
+      <div class="actions">
+        <a class="btn ghost" href="/upload.html">업로드</a>
+        <a class="btn primary" href="/upload.html">무료로 시작</a>
+      </div>
+    </div>
+  </header>
 
-<!-- 히어로 섹션 어딘가 -->
-<section class="hero">
-  <div class="ba">
-    <div class="ba-after">
-      <img src="https://d3ch3ramkh1cdh.cloudfront.net/examples/after.jpg" alt="After">
-    </div>
-    <div class="ba-before">
-      <img src="https://d3ch3ramkh1cdh.cloudfront.net/examples/before.jpg" alt="Before">
-    </div>
-    <div class="ba-divider" aria-hidden="true"></div>
-    <div class="ba-handle" aria-hidden="true"></div>
-    <span class="ba-badge ba-badge--before">Before</span>
-    <span class="ba-badge ba-badge--after">After</span>
-  </div>
-</section>
+  <main class="container">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="kicker">신뢰 로고</div>
+          <h1 class="h-title">내가 본 바다를 AI로 재현하다</h1>
+          <p class="h-desc">드래그 없이 마우스만 움직여도 전/후가 즉시 비교됩니다. 업로드만 하세요.</p>
+          <div class="h-ctas">
+            <a class="btn primary" href="/upload.html">무료로 시작</a>
+            <a class="btn ghost" href="#how">사용 방법</a>
+          </div>
+        </div>
+
+        <!-- Before/After -->
+        <div class="ba" 
+             data-before="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1600&q=70"
+             data-after="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=70">
+          <img class="ba-after"  alt="after" />
+          <img class="ba-before" alt="before" />
+          <i class="ba-divider"></i>
+          <i class="ba-handle"></i>
+          <span class="badge before">Before</span>
+          <span class="badge after">After</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Features</h2>
+      <div class="features">
+        <div class="card"><h3>색보정</h3><p>적색/난색 스펙트럼 복원, 정밀 화이트 밸런스.</p></div>
+        <div class="card"><h3>부유물 제거</h3><p>Dehaze/Backscatter 감쇠, 대비 향상.</p></div>
+        <div class="card"><h3>손떨림 복원</h3><p>모션블러/흔들림 보정(정지화상 기준).</p></div>
+        <div class="card"><h3>슈퍼레졸루션</h3><p>디테일/해상감 강화(노이즈 제어).</p></div>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <h2>How it works</h2>
+      <div class="card"><p>① 업로드 → ② 모델 선택 → ③ 미리보기 확인 후 다운로드</p></div>
+      <p class="note">※ 무료 티어는 워터마크가 적용될 수 있습니다.</p>
+    </section>
+
+    <footer class="footer">
+      © aqua.ai — Dive safer, shoot better, edit smarter.
+    </footer>
+  </main>
+</body>
+</html>

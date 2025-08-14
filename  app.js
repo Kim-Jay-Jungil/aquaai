@@ -1,49 +1,48 @@
-(() => {
-  function mountBA(el) {
-    const before  = el.querySelector('.ba-before img');
-    const after   = el.querySelector('.ba-after img');
-    const divider = el.querySelector('.ba-divider');
-    const handle  = el.querySelector('.ba-handle');
+// 앱 전역 스크립트 (Before/After 슬라이더)
+function mountBA(root){
+  if(!root) return;
+  const srcBefore = root.getAttribute('data-before');
+  const srcAfter  = root.getAttribute('data-after');
+  const imgBefore = root.querySelector('.ba-before');
+  const imgAfter  = root.querySelector('.ba-after');
+  const divider   = root.querySelector('.ba-divider');
+  const handle    = root.querySelector('.ba-handle');
 
-    let rect;
+  if(srcBefore) imgBefore.src = srcBefore;
+  if(srcAfter)  imgAfter.src  = srcAfter;
 
-    function measure() {
-      rect = el.getBoundingClientRect();
-    }
+  const clamp01 = (n)=> Math.min(1, Math.max(0, n));
 
-    function clamp01(v) {
-      return Math.max(0, Math.min(1, v));
-    }
+  const setPct = (pct)=>{ // 0~1
+    const p = clamp01(pct);
+    const left = (p*100)+'%';
+    imgBefore.style.clipPath = `inset(0 calc(${100-p*100}% ) 0 0)`;
+    divider.style.left = left;
+    handle.style.left  = left;
+  };
 
-    function setCut(pct) {
-      pct = clamp01(pct);
-      const pctStr = (pct * 100).toFixed(2) + '%';
-      el.style.setProperty('--cut', pctStr);
-      if (divider) divider.style.left = pctStr;
-      if (handle)  handle.style.left  = pctStr;
-    }
+  const rect = ()=> root.getBoundingClientRect();
 
-    function moveFromX(x) {
-      if (!rect) measure();
-      const local = (x - rect.left) / rect.width;
-      setCut(local);
-    }
+  const onMove = (x)=>{
+    const r = rect();
+    setPct((x - r.left) / r.width);
+  };
 
-    // 초기 상태
-    measure();
-    setCut(0.5);
+  // 초기 50%
+  setPct(.5);
 
-    // 이벤트
-    el.addEventListener('pointermove', (e) => moveFromX(e.clientX));
-    el.addEventListener('pointerdown', (e) => moveFromX(e.clientX));
-    el.addEventListener('touchmove', (e) => {
-      if (e.touches && e.touches[0]) moveFromX(e.touches[0].clientX);
-    }, { passive: true });
+  // 이벤트
+  root.addEventListener('mousemove',  (e)=> onMove(e.clientX), {passive:true});
+  root.addEventListener('touchmove',  (e)=> onMove(e.touches[0].clientX), {passive:true});
 
-    window.addEventListener('resize', measure);
-  }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.ba').forEach(mountBA);
+  // 키보드 접근성(좌/우)
+  root.setAttribute('tabindex','0');
+  root.addEventListener('keydown', (e)=>{
+    if(e.key==='ArrowLeft')  setPct((parseFloat(handle.style.left)||50)/100 - 0.02);
+    if(e.key==='ArrowRight') setPct((parseFloat(handle.style.left)||50)/100 + 0.02);
   });
-})();
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.ba').forEach(mountBA);
+});
