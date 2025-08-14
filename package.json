@@ -1,9 +1,9 @@
 {
-  "name": "aquaai",
+  "name": "aquaal",
   "private": true,
-  "type": "module",
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.637.0",
-    "@aws-sdk/s3-request-presigner": "^3.637.0"
+  "engines": { "node": "20.x" },
+  "scripts": {
+    "build": "echo \"no-op\"",
+    "start": "node app.js"
   }
 }
