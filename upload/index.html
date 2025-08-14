@@ -12,8 +12,9 @@
   button { padding: 10px 14px; border-radius: 10px; cursor: pointer; background: #239ba7; border: 0; color: #fff; font-weight: 700;}
   button:disabled { opacity: .6; cursor: not-allowed; }
   progress { width: 100%; height: 14px }
-  .out { margin-top: 10px; color:#0b1426 }
+  .out { margin-top: 10px; color:#0b1426; white-space: pre-wrap; }
   a.link { color: #0b6; font-weight: 700; text-decoration: none; }
+  .err { color:#b91c1c }
 </style>
 
 <div class="wrap">
@@ -39,24 +40,36 @@ btn.onclick = async () => {
     if (!f) return alert("파일을 선택하세요.");
     btn.disabled = true; out.textContent = "사전서명 요청 중…";
 
-    // 1) 사전서명 URL 요청
+    // 1) presign
     const r = await fetch("/api/presign-put", {
       method: "POST",
       headers: { "Content-Type":"application/json" },
       body: JSON.stringify({ filename: f.name, type: f.type, size: f.size })
     });
     const j = await r.json();
-    if (!r.ok) throw new Error(j.error || r.statusText);
+    if (!r.ok) throw new Error("presign 실패: " + (j.error || r.statusText));
+    console.log("[presign]", j);
 
-    // 2) 사전서명 URL로 S3에 직접 PUT
-    out.textContent = "업로드 중…";
-    await putFile(j.uploadUrl, f, p => pg.value = p);
+    // 안전 가드: 반드시 S3 presign(uploadUrl)로 PUT 해야 합니다.
+    const uploadUrl = j.uploadUrl || j.url;       // 옛 코드 호환
+    const publicUrl = j.publicUrl;                // 보기/다운로드용(여기로 PUT 금지)
 
-    // 3) 완료 링크 제공 (CDN_BASE가 있으면 CDN URL, 없으면 S3 URL)
-    out.innerHTML = `업로드 완료! <a class="link" href="${j.publicUrl}" target="_blank" rel="noreferrer">파일 열기</a>`;
+    if (!uploadUrl) throw new Error("프리사인 업로드 URL이 없습니다.");
+    const host = new URL(uploadUrl).hostname;
+    if (!/amazonaws\.com$/.test(host)) {
+      throw new Error("업로드 대상이 S3가 아님: " + host + "\n(publicUrl로 PUT하지 마세요)");
+    }
+
+    out.textContent = "업로드 중…\n" + uploadUrl;
+
+    // 2) PUT to S3 (프리사인 URL)
+    await putFile(uploadUrl, f, p => pg.value = p);
+
+    // 3) 완료
+    out.innerHTML = `업로드 완료!\n<a class="link" href="${publicUrl}" target="_blank" rel="noreferrer">파일 열기</a>`;
   } catch (e) {
     console.error(e);
-    out.textContent = "에러: " + (e.message || e);
+    out.innerHTML = '<span class="err">에러: ' + (e.message || e) + '</span>';
   } finally {
     btn.disabled = false;
   }
@@ -67,10 +80,15 @@ function putFile(url, file, onProgress) {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url, true);
     xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.responseType = "text"; // S3 XML 에러 본문을 보려고
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
     };
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error("S3 PUT " + xhr.status));
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) return resolve();
+      // S3 XML 에러 본문 노출 (NoSuchBucket / AccessDenied 등)
+      reject(new Error(`S3 PUT ${xhr.status}\n${xhr.responseText || ""}`));
+    };
     xhr.onerror = () => reject(new Error("네트워크 오류"));
     xhr.send(file);
   });
