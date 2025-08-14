@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>로그인 — aqua.ai</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script
+    async
+    crossorigin="anonymous"
+    data-clerk-publishable-key="%CLERK_PUBLISHABLE_KEY%"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+  </script>
+</head>
+<body>
+<header class="header">
+  <div class="container nav">
+    <div class="logo">aqua.ai</div>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/upload">업로드</a>
+    </nav>
+  </div>
+</header>
+
+<section class="section">
+  <div class="container">
+    <h1 class="h1">로그인 / 회원가입</h1>
+    <div id="auth" class="card" style="padding:24px"></div>
+  </div>
+</section>
+
+<script>
+window.addEventListener('load', async () => {
+  // Clerk 로드 대기
+  await window.Clerk.load();
+
+  // 로그인 된 상태면 업로드로 이동
+  if (window.Clerk.user) {
+    location.href = '/upload';
+    return;
+  }
+
+  // 사인인 컴포넌트 마운트
+  const el = document.getElementById('auth');
+  window.Clerk.mountSignIn(el, {
+    appearance: {
+      elements: {
+        card: { borderRadius: '16px', boxShadow: '0 10px 30px rgba(11,20,38,.08)' }
+      },
+      variables: {
+        colorPrimary: '#239BA7',
+      }
+    },
+    redirectUrl: '/upload',          // 성공 후 이동
+    signUpContinueUrl: '/upload'
+  });
+});
+</script>
+</body>
+</html>
