@@ -1,4 +1,3 @@
-// app.js
 (() => {
   function mountBA(el) {
     const before  = el.querySelector('.ba-before img');
