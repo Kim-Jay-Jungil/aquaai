@@ -266,5 +266,122 @@
     });
   })();
   </script>
+
+
+<!-- 6) HEADER AUTH UI -->
+<script
+  async
+  crossorigin="anonymous"
+  data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+</script>
+<script>
+(async function(){
+  // Clerk 로드
+  await window.Clerk.load();
+
+  // 헤더의 네비게이션 컨테이너 (예: <nav class="actions">)
+  const nav = document.querySelector('.actions');
+  if (!nav) return;
+
+  // 기존에 마운트해둔 UI 제거(중복 방지)
+  nav.querySelectorAll('.auth-mounted').forEach(n => n.remove());
+
+  // UI를 담을 래퍼
+  const wrap = document.createElement('span');
+  wrap.className = 'auth-mounted';
+  wrap.style.display = 'inline-flex';
+  wrap.style.gap = '8px';
+  nav.appendChild(wrap);
+
+  // 로그인 안 된 상태 → "로그인" 버튼 노출
+  if (!window.Clerk.user) {
+    const login = document.createElement('a');
+    login.className = 'btn primary';
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    login.href = '/signin?redirect=' + redirect;
+    login.textContent = '로그인';
+    wrap.appendChild(login);
+    return;
+  }
+
+  // 로그인 된 상태 → 유저 버튼 + 로그아웃
+  const userSlot = document.createElement('span');
+  userSlot.id = 'userbtn';
+  wrap.appendChild(userSlot);
+
+  window.Clerk.mountUserButton(userSlot, {
+    appearance: { variables: { colorPrimary: '#239BA7' } }
+  });
+
+  const logout = document.createElement('button');
+  logout.className = 'btn ghost';
+  logout.type = 'button';
+  logout.textContent = '로그아웃';
+  logout.addEventListener('click', async ()=>{
+    await window.Clerk.signOut();
+    location.reload();
+  });
+  wrap.appendChild(logout);
+})();
+</script>
+
+<!-- 8) WHOAMI TEST (버튼 + 결과 표시 포함) -->
+<style>
+  .whoami-card{
+    margin:16px 0; padding:12px;
+    border:1px solid rgba(255,255,255,.12); border-radius:12px;
+    background:rgba(255,255,255,.05); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    white-space:pre-wrap; color:#dbeafe;
+  }
+</style>
+
+<script
+  async
+  crossorigin="anonymous"
+  data-clerk-publishable-key="pk_여기에_Clerk_Publishable_Key"
+  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+</script>
+
+<div style="margin-top:16px; display:flex; gap:8px; align-items:center;">
+  <button class="btn ghost" type="button" onclick="testWhoAmI()">내 정보 확인</button>
+  <span class="note">콘솔/아래 박스에 응답이 표시됩니다.</span>
+</div>
+<pre id="whoamiBox" class="whoami-card" style="display:none"></pre>
+
+<script>
+async function testWhoAmI(){
+  try{
+    await window.Clerk.load();
+    const box = document.getElementById('whoamiBox');
+    box.style.display = 'block';
+    box.textContent = '요청 중…';
+
+    if(!window.Clerk.user){
+      box.textContent = '로그인이 필요합니다.';
+      return;
+    }
+
+    // Clerk JWT 발급 (JWT 템플릿 이름은 Clerk 대시보드에서 생성한 값과 일치해야 합니다. 예: "backend")
+    const token = await window.Clerk.session.getToken({ template: 'backend' });
+    if(!token){
+      box.textContent = '토큰 발급 실패';
+      return;
+    }
+
+    const r = await fetch('/api/whoami', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const j = await r.json();
+
+    box.textContent = JSON.stringify(j, null, 2);
+    console.log('[whoami]', j);
+  }catch(err){
+    console.error('[whoami] error', err);
+    const box = document.getElementById('whoamiBox');
+    if(box){ box.style.display='block'; box.textContent = '오류: ' + (err?.message || err); }
+  }
+}
+</script>
 </body>
 </html>

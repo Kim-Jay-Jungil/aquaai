@@ -3,18 +3,15 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>로그인 • aqua.ai</title>
+  <title>회원가입 • aqua.ai</title>
   <link rel="stylesheet" href="/styles.css"/>
-  <!-- Clerk 프론트 SDK -->
   <script
     async
     crossorigin="anonymous"
     data-clerk-publishable-key="%CLERK_PUBLISHABLE_KEY%"
     src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
   </script>
-  <style>
-    .auth-card{ max-width: 420px; margin: 48px auto; }
-  </style>
+  <style>.auth-card{ max-width: 420px; margin: 48px auto; }</style>
 </head>
 <body>
   <header class="sitebar">
@@ -29,24 +26,21 @@
   </main>
 
   <script>
-  // 페이지 로드 후 Clerk UI 마운트
   (async function(){
     await window.Clerk.load();
 
-    // 이미 로그인 상태면 원하는 곳으로 이동
     const params = new URLSearchParams(location.search);
     const redirect = params.get('redirect') || '/upload.html';
     if (window.Clerk.user) { location.href = redirect; return; }
 
-    window.Clerk.mountSignIn(document.getElementById('auth'), {
-      afterSignInUrl: redirect,
+    window.Clerk.mountSignUp(document.getElementById('auth'), {
+      afterSignUpUrl: redirect,
       redirectUrl: redirect,
       appearance: {
         variables: { colorPrimary: '#239BA7' },
         elements: { card: { borderRadius: '16px' } }
       },
-      // 회원가입으로 이동 링크 노출 (Clerk 기본 제공)
-      signUpUrl: '/signup'
+      signInUrl: '/signin'
     });
   })();
   </script>

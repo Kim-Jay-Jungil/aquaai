@@ -87,5 +87,80 @@
       }
     });
   </script>
+
+  <!-- 6) HEADER AUTH UI -->
+<script
+  async
+  crossorigin="anonymous"
+  data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+</script>
+<script>
+(async function(){
+  // Clerk 로드
+  await window.Clerk.load();
+
+  // 헤더의 네비게이션 컨테이너 (예: <nav class="actions">)
+  const nav = document.querySelector('.actions');
+  if (!nav) return;
+
+  // 기존에 마운트해둔 UI 제거(중복 방지)
+  nav.querySelectorAll('.auth-mounted').forEach(n => n.remove());
+
+  // UI를 담을 래퍼
+  const wrap = document.createElement('span');
+  wrap.className = 'auth-mounted';
+  wrap.style.display = 'inline-flex';
+  wrap.style.gap = '8px';
+  nav.appendChild(wrap);
+
+  // 로그인 안 된 상태 → "로그인" 버튼 노출
+  if (!window.Clerk.user) {
+    const login = document.createElement('a');
+    login.className = 'btn primary';
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    login.href = '/signin?redirect=' + redirect;
+    login.textContent = '로그인';
+    wrap.appendChild(login);
+    return;
+  }
+
+  // 로그인 된 상태 → 유저 버튼 + 로그아웃
+  const userSlot = document.createElement('span');
+  userSlot.id = 'userbtn';
+  wrap.appendChild(userSlot);
+
+  window.Clerk.mountUserButton(userSlot, {
+    appearance: { variables: { colorPrimary: '#239BA7' } }
+  });
+
+  const logout = document.createElement('button');
+  logout.className = 'btn ghost';
+  logout.type = 'button';
+  logout.textContent = '로그아웃';
+  logout.addEventListener('click', async ()=>{
+    await window.Clerk.signOut();
+    location.reload();
+  });
+  wrap.appendChild(logout);
+})();
+</script>
+
+<!-- 7) UPLOAD PAGE GUARD -->
+<script
+  async
+  crossorigin="anonymous"
+  data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+</script>
+<script>
+(async function(){
+  await window.Clerk.load();
+  if (!window.Clerk.user) {
+    const back = encodeURIComponent(location.pathname + location.search || '/upload.html');
+    location.href = '/signin?redirect=' + back;
+  }
+})();
+</script>
 </body>
 </html>
