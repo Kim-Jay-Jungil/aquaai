@@ -1,4 +1,18 @@
 <!doctype html>
 <meta charset="utf-8" />
-<title>ok</title>
-<h1>OK</h1>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>aqua.ai</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 40px; }
+  .wrap { max-width: 840px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 12px; }
+  a.btn { display: inline-block; padding: 12px 16px; background: #239ba7; color: #fff; border-radius: 10px; font-weight: 700; text-decoration: none; }
+  a.btn:hover { filter: brightness(0.95); }
+  .note { color: #6b7280; margin-top: 8px; }
+</style>
+<div class="wrap">
+  <h1>aqua.ai — 이미지 업로드 데모</h1>
+  <p class="note">S3 Direct PUT(사전서명)으로 브라우저에서 바로 업로드합니다.</p>
+  <p><a class="btn" href="/upload">업로드 페이지로 가기</a></p>
+  <p class="note">상태 체크: <a href="/api/health" target="_blank">/api/health</a></p>
+</div>
