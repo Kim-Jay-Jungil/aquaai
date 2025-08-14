@@ -1,89 +1,19 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>aqua.ai — 바다의 색을 되돌리는 AI 보정</title>
-  <link rel="stylesheet" href="/styles.css">
-</head>
-<body>
-  <header class="header">
-    <div class="container nav">
-      <div class="logo">aqua.ai</div>
-      <nav>
-        <a href="/upload">업로드</a>
-        <a href="/signin">로그인</a>
-        <a class="btn primary" href="/upload">무료로 시작</a>
-      </nav>
+<!-- index.html 의 head (혹은 body 끝) -->
+<link rel="stylesheet" href="/styles.css">
+<script src="/app.js" defer></script>
+
+<!-- 히어로 섹션 어딘가 -->
+<section class="hero">
+  <div class="ba">
+    <div class="ba-after">
+      <img src="https://d3ch3ramkh1cdh.cloudfront.net/examples/after.jpg" alt="After">
     </div>
-  </header>
-
-  <section class="section hero">
-    <div class="container hero-grid">
-      <div>
-        <h1 class="h1">내가 본 바다를 <br>AI로 재현하다</h1>
-        <p class="p">드래그 없이 마우스만 움직여도 전/후가 즉시 비교됩니다. 업로드만 하세요.</p>
-        <div style="display:flex; gap:10px; margin-top:16px">
-          <a class="btn primary" href="/upload">무료로 시작</a>
-          <a class="btn ghost" href="/signin">로그인</a>
-        </div>
-      </div>
-
-      <div class="card" style="padding:14px">
-        <div class="ba" aria-label="Before After">
-          <div class="ba-before">
-            <img src="https://picsum.photos/id/1011/1600/900" alt="Before">
-          </div>
-          <img src="https://picsum.photos/id/1015/1600/900" alt="After">
-          <div class="ba-divider"></div>
-          <div class="handle">↔︎</div>
-          <div class="badge">Before</div>
-          <div class="badge right">After</div>
-        </div>
-      </div>
+    <div class="ba-before">
+      <img src="https://d3ch3ramkh1cdh.cloudfront.net/examples/before.jpg" alt="Before">
     </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <div class="feature-grid">
-        <div class="tile"><h4>색보정</h4><p>적색/난색 스펙트럼 복원, 정밀 화이트밸런스.</p></div>
-        <div class="tile"><h4>부유물 제거</h4><p>Backscatter/Dehaze 감쇠, 대비 향상.</p></div>
-        <div class="tile"><h4>손떨림 복원</h4><p>경미한 모션블러/흔들림 보정.</p></div>
-        <div class="tile"><h4>슈퍼레졸루션</h4><p>디테일/해상도 강화(노이즈 제어).</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="section">
-    <div class="container">
-      <div class="card" style="padding:20px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-weight:800; font-size:20px">준비되셨나요?</div>
-          <div class="p">이미지를 업로드하고 차이를 확인해보세요.</div>
-        </div>
-        <a class="btn primary" href="/upload">업로드하기</a>
-      </div>
-    </div>
-  </section>
-
-  <footer class="footer">
-    <div class="container">© aqua.ai — Dive safer, shoot better, edit smarter.</div>
-  </footer>
-
-  <script>
-  function mountBA(el){
-    const move = (x)=>{
-      const r=el.getBoundingClientRect();
-      let pct=(x - r.left)/r.width; pct=Math.max(0,Math.min(1,pct));
-      el.style.setProperty('--cut', (pct*100)+'%');
-    };
-    el.addEventListener('mousemove', e=>move(e.clientX));
-    el.addEventListener('touchmove', e=>move(e.touches[0].clientX), {passive:true});
-  }
-  window.addEventListener('DOMContentLoaded', ()=> {
-    document.querySelectorAll('.ba').forEach(mountBA);
-  });
-  </script>
-</body>
-</html>
+    <div class="ba-divider" aria-hidden="true"></div>
+    <div class="ba-handle" aria-hidden="true"></div>
+    <span class="ba-badge ba-badge--before">Before</span>
+    <span class="ba-badge ba-badge--after">After</span>
+  </div>
+</section>

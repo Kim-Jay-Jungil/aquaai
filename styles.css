@@ -1,51 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;600;700&display=swap');
-
-:root{
-  --teal:#239BA7; --mint:#7ADAA5; --sand:#ECECBB; --amber:#E1AA36;
-  --ink:#0B1426; --muted:#6B7280; --bg:#F8FAF9; --card:#FFFFFF; --line:rgba(12,18,26,.08);
-  --r-lg:16px; --r-md:12px; --r-sm:8px; --shadow-1:0 10px 30px rgba(11,20,38,.08);
-  --container:1080px;
+/* Before/After slider */
+.ba {
+  --cut: 50%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #0b1426;
 }
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{font-family:Inter,"Noto Sans KR",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
-.container{width:min(var(--container),calc(100% - 40px));margin-inline:auto}
-.section{padding:56px 0}
-.h1{font-size:clamp(28px,5vw,44px);font-weight:800;letter-spacing:-0.02em}
-.p{font-size:16px;color:var(--muted)}
 
-.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:10px;border:1px solid transparent;font-weight:700;cursor:pointer;text-decoration:none}
-.btn.primary{background:var(--teal);color:#fff}
-.btn.primary:hover{filter:brightness(.95)}
-.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
-.btn.ghost:hover{background:#fff;box-shadow:var(--shadow-1)}
+.ba .ba-after,
+.ba .ba-before {
+  position: absolute;
+  inset: 0;
+}
 
-.header{position:sticky;top:0;z-index:100;background:linear-gradient(180deg,rgba(35,155,167,.08),rgba(122,218,165,.03));backdrop-filter:saturate(130%) blur(6px);border-bottom:1px solid var(--line)}
-.nav{display:flex;align-items:center;justify-content:space-between;height:64px}
-.logo{font-weight:900;font-size:20px;letter-spacing:.5px}
-.nav a{color:var(--ink);text-decoration:none;padding:8px 10px;border-radius:8px}
-.nav a:hover{background:#fff}
+.ba img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+}
 
-.hero{padding:48px 0 12px}
-.hero-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center}
-@media (max-width:920px){.hero-grid{grid-template-columns:1fr}}
+/* 왼쪽(before)만 잘라 보이기 */
+.ba .ba-before {
+  clip-path: polygon(0 0, var(--cut) 0, var(--cut) 100%, 0 100%);
+}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1);overflow:hidden}
+.ba .ba-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--cut);
+  width: 2px;
+  background: rgba(255,255,255,.85);
+  pointer-events: none;
+}
 
-.ba{--cut:50%;position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--r-lg);overflow:hidden;user-select:none}
-.ba img{width:100%;height:100%;object-fit:cover;display:block}
-.ba .ba-before{position:absolute;inset:0;width:var(--cut);overflow:hidden}
-.ba .ba-divider{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent calc(var(--cut) - .75px),#fff calc(var(--cut) - .75px),#fff calc(var(--cut) + .75px),transparent calc(var(--cut) + .75px))}
-.ba .handle{position:absolute;top:50%;left:var(--cut);transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--line);display:grid;place-items:center;box-shadow:var(--shadow-1);pointer-events:none}
-.badge{position:absolute;top:12px;left:12px;background:rgba(11,20,38,.8);color:#fff;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
-.badge.right{left:auto;right:12px}
+.ba .ba-handle {
+  position: absolute;
+  left: var(--cut);
+  top: 50%;
+  transform: translate(-50%,-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+}
 
-.feature-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-@media (max-width:980px){.feature-grid{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:520px){.feature-grid{grid-template-columns:1fr}}
+.ba .ba-badge {
+  position: absolute;
+  top: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0b1426;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.15);
+}
 
-.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow-1)}
-.tile h4{margin:6px 0 8px;font-size:18px}
-.tile p{margin:0;font-size:14px;color:var(--muted)}
-
-.footer{padding:32px 0 64px;color:var(--muted);border-top:1px solid var(--line)}
+.ba .ba-badge--before { left: 12px; }
+.ba .ba-badge--after  { right: 12px; }
