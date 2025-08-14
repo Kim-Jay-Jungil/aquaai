@@ -8,7 +8,6 @@
   <!-- (선택) 폰트 -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
-  <script defer src="/app.js"></script>
 </head>
 <body>
 
@@ -58,8 +57,10 @@
             data-after ="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=70"
             data-aspect="16/9"
           >
-            <img class="ba-after"  alt="After">
-            <img class="ba-before" alt="Before">
+            <!-- after/before 를 '컨테이너' + img 로 구성 (폭 가변 방식) -->
+            <div class="ba-after"><img alt="After"></div>
+            <div class="ba-before"><img alt="Before"></div>
+
             <i class="ba-divider" aria-hidden="true"></i>
             <i class="ba-handle"  aria-hidden="true"></i>
             <span class="badge before">Before</span>
@@ -87,8 +88,8 @@
           </div>
           <div class="split-visual card">
             <div class="ba" data-before="https://cdn.aqua.ai/examples/color_before.jpg" data-after="https://cdn.aqua.ai/examples/color_after.jpg" data-aspect="4/3">
-              <img class="ba-after"  alt="After">
-              <img class="ba-before" alt="Before">
+              <div class="ba-after"><img alt="After"></div>
+              <div class="ba-before"><img alt="Before"></div>
               <i class="ba-divider"></i><i class="ba-handle"></i>
               <span class="badge before">Before</span><span class="badge after">After</span>
             </div>
@@ -108,8 +109,8 @@
           </div>
           <div class="split-visual card">
             <div class="ba" data-before="https://cdn.aqua.ai/examples/dehaze_before.jpg" data-after="https://cdn.aqua.ai/examples/dehaze_after.jpg" data-aspect="4/3">
-              <img class="ba-after"  alt="After">
-              <img class="ba-before" alt="Before">
+              <div class="ba-after"><img alt="After"></div>
+              <div class="ba-before"><img alt="Before"></div>
               <i class="ba-divider"></i><i class="ba-handle"></i>
               <span class="badge before">Before</span><span class="badge after">After</span>
             </div>
@@ -129,8 +130,8 @@
           </div>
           <div class="split-visual card">
             <div class="ba" data-before="https://cdn.aqua.ai/examples/deblur_before.jpg" data-after="https://cdn.aqua.ai/examples/deblur_after.jpg" data-aspect="4/3">
-              <img class="ba-after"  alt="After">
-              <img class="ba-before" alt="Before">
+              <div class="ba-after"><img alt="After"></div>
+              <div class="ba-before"><img alt="Before"></div>
               <i class="ba-divider"></i><i class="ba-handle"></i>
               <span class="badge before">Before</span><span class="badge after">After</span>
             </div>
@@ -150,8 +151,8 @@
           </div>
           <div class="split-visual card">
             <div class="ba" data-before="https://cdn.aqua.ai/examples/sr_before.jpg" data-after="https://cdn.aqua.ai/examples/sr_after.jpg" data-aspect="4/3">
-              <img class="ba-after"  alt="After">
-              <img class="ba-before" alt="Before">
+              <div class="ba-after"><img alt="After"></div>
+              <div class="ba-before"><img alt="Before"></div>
               <i class="ba-divider"></i><i class="ba-handle"></i>
               <span class="badge before">Before</span><span class="badge after">After</span>
             </div>
@@ -199,5 +200,71 @@
       <div class="container">© aqua.ai — Dive safer, shoot better, edit smarter.</div>
     </footer>
   </main>
+
+  <!-- === 슬라이더 인라인 스크립트 (경로/캐시 문제 회피용) === -->
+  <script>
+  (function(){
+    // 폭 가변 방식: before 컨테이너의 width를 CSS 변수 --cut 로 제어
+    function mountBA(root){
+      if(!root) return;
+
+      const srcBefore = root.getAttribute('data-before');
+      const srcAfter  = root.getAttribute('data-after');
+      const aspect    = root.getAttribute('data-aspect');
+
+      const wrapAfter = root.querySelector('.ba-after > img');
+      const wrapBefore= root.querySelector('.ba-before > img');
+      const divider   = root.querySelector('.ba-divider');
+      const handle    = root.querySelector('.ba-handle');
+
+      if (srcAfter)  wrapAfter.src  = srcAfter;
+      if (srcBefore) wrapBefore.src = srcBefore;
+      if (aspect && aspect.includes('/')) {
+        const [w,h] = aspect.split('/').map(Number);
+        if (w>0 && h>0) root.style.aspectRatio = w + '/' + h;
+      }
+
+      let current = 0.5; // 50%
+      setCut(current);
+
+      function setCut(p){
+        current = Math.max(0, Math.min(1, p));
+        const pct = (current * 100).toFixed(2) + '%';
+        root.style.setProperty('--cut', pct);
+        if (divider) divider.style.left = pct;
+        if (handle)  handle.style.left  = pct;
+      }
+
+      function rect(){ return root.getBoundingClientRect(); }
+      function toPct(clientX){
+        const r = rect();
+        return (clientX - r.left) / r.width;
+      }
+
+      function onPointer(e){ setCut(toPct(e.clientX)); }
+      function onTouch(e){
+        if(e.touches && e.touches[0]) setCut(toPct(e.touches[0].clientX));
+      }
+
+      root.addEventListener('pointerdown', onPointer);
+      root.addEventListener('pointermove', onPointer);
+      root.addEventListener('mousemove',   onPointer);
+      root.addEventListener('touchstart',  onTouch, {passive:true});
+      root.addEventListener('touchmove',   onTouch, {passive:true});
+
+      // 키보드 접근성
+      root.tabIndex = 0;
+      root.addEventListener('keydown', (e)=>{
+        const step = e.shiftKey ? 0.1 : 0.03;
+        if(e.key === 'ArrowLeft')  setCut(current - step);
+        if(e.key === 'ArrowRight') setCut(current + step);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{
+      document.querySelectorAll('.ba').forEach(mountBA);
+    });
+  })();
+  </script>
 </body>
 </html>
