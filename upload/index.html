@@ -2,9 +2,73 @@
 <html lang="ko">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Upload</title>
-<body style="font-family:system-ui,Arial,sans-serif;margin:0;padding:40px">
-  <h1>Upload Page</h1>
-  <p>이 페이지가 보이면 /upload 라우팅이 정상입니다.</p>
-</body>
+<title>Upload — aqua.ai</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 40px; }
+  .wrap { max-width: 840px; margin: 0 auto; }
+  h1 { font-size: 24px; margin: 0 0 12px; }
+  .box { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; background: #fafafa; }
+  input[type=file] { margin: 12px 0; }
+  button { padding: 10px 14px; border-radius: 10px; cursor: pointer; background: #239ba7; border: 0; color: #fff; font-weight: 700;}
+  button:disabled { opacity: .6; cursor: not-allowed; }
+  progress { width: 100%; height: 14px; }
+  .out { margin-top: 10px; }
+  a.link { color: #0b6; font-weight: 700; text-decoration: none; }
+</style>
+
+<div class="wrap">
+  <h1>업로드</h1>
+  <div class="box">
+    <input id="file" type="file" accept="image/*" />
+    <div><button id="go">업로드</button></div>
+    <div style="margin:12px 0;"><progress id="pg" value="0" max="100"></progress></div>
+    <div id="out" class="out"></div>
+  </div>
+</div>
+
+<script>
+const $ = (s)=>document.querySelector(s);
+const fileEl = $("#file");
+const btn = $("#go");
+const pg = $("#pg");
+const out = $("#out");
+
+btn.onclick = async () => {
+  try {
+    const f = fileEl.files[0];
+    if(!f) return alert("파일을 선택하세요.");
+    btn.disabled = true; out.textContent = "사전서명 요청 중...";
+
+    const r = await fetch("/api/presign-put", {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ filename: f.name, type: f.type, size: f.size })
+    });
+    const j = await r.json();
+    if(!r.ok) throw new Error(j.error || r.statusText);
+
+    out.textContent = "업로드 중...";
+    await putFile(j.url, f, (p)=>pg.value = p);
+
+    out.innerHTML = `업로드 완료! <a class="link" href="${j.publicUrl}" target="_blank" rel="noreferrer">파일 열기</a>`;
+  } catch(e) {
+    console.error(e);
+    out.textContent = "에러: " + (e.message || e);
+  } finally {
+    btn.disabled = false;
+  }
+};
+
+function putFile(url, file, onProgress){
+  return new Promise((resolve, reject)=>{
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    xhr.upload.onprogress = (e)=>{ if(e.lengthComputable) onProgress(Math.round(e.loaded/e.total*100)); };
+    xhr.onload = ()=> (xhr.status>=200 && xhr.status<300) ? resolve() : reject(new Error("S3 PUT " + xhr.status));
+    xhr.onerror = ()=> reject(new Error("네트워크 에러"));
+    xhr.send(file);
+  });
+}
+</script>
 </html>
