@@ -2,386 +2,140 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>aqua.ai — 바다의 색을 되돌리는 AI 보정</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>aqua.ai — 내가 본 바다를 AI로 재현하다</title>
   <link rel="stylesheet" href="/styles.css" />
-  <!-- (선택) 폰트 -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="드래그 없이 마우스만 움직여도 전/후가 즉시 비교됩니다. 업로드만 하세요." />
 </head>
 <body>
-
-  <!-- Top Bar -->
-  <header class="sitebar">
+  <header class="site-header">
     <div class="container nav">
-      <div class="brand"><a href="/">aqua.ai</a></div>
-      <nav class="actions">
-        <a class="btn ghost" href="/upload.html">업로드</a>
-        <a class="btn primary" href="/upload.html">무료로 시작</a>
+      <a class="logo" href="/">aqua.ai</a>
+      <nav class="nav-actions">
+        <a class="link" href="/upload.html">업로드</a>
+        <span class="divider"></span>
+        <span id="auth-box" class="auth-box">로그인 로딩…</span>
       </nav>
     </div>
   </header>
 
-  <main>
-    <!-- Hero -->
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <p class="kicker">“바다의 색을 되돌리는 AI 보정”</p>
-          <h1 class="h-title">내가 본 바다를<br>AI로 재현하다</h1>
-          <p class="h-desc">드래그 없이 마우스만 움직여도 전/후가 즉시 비교됩니다. 업로드만 하세요.</p>
-          <div class="h-ctas">
-            <a class="btn primary" href="/upload.html">무료로 시작</a>
-            <a class="btn ghost" href="#how">사용 방법</a>
-          </div>
-
-          <div class="meta-row">
-            <div class="stat"><strong>★ 4.9</strong><span> / 9K+ Reviews</span></div>
-            <div class="trust">Trusted by 2M+ users</div>
-          </div>
-
-          <div class="partners">
-            <div class="pill">OpenAI</div>
-            <div class="pill">AWS</div>
-            <div class="pill">Gemini</div>
-            <div class="pill">NVIDIA</div>
-          </div>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1 class="hero-title">내가 본 바다를 <span class="hi">AI</span>로 재현하다</h1>
+        <p class="hero-sub">드래그 없이 마우스만 움직여도 전/후가 즉시 비교됩니다. 업로드만 하세요.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="/upload.html">무료로 시작</a>
+          <a class="btn btn-ghost" href="#pricing">요금 보기</a>
         </div>
+        <p class="meta">ReviewScore <b>4.9</b> | <b>9K+</b> Reviews</p>
+      </div>
 
-        <!-- HERO_SPLIT -->
-        <div class="card">
-          <div
-            class="ba"
-            aria-label="Before After preview"
-            data-before="https://images.unsplash.com/photo-1520256862855-398228c41684?auto=format&fit=crop&w=1600&q=70"
-            data-after ="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=70"
-            data-aspect="16/9"
-          >
-            <!-- after/before 를 '컨테이너' + img 로 구성 (폭 가변 방식) -->
-            <div class="ba-after"><img alt="After"></div>
-            <div class="ba-before"><img alt="Before"></div>
-
-            <i class="ba-divider" aria-hidden="true"></i>
-            <i class="ba-handle"  aria-hidden="true"></i>
-            <span class="badge before">Before</span>
-            <span class="badge after">After</span>
-          </div>
+      <div class="hero-demo">
+        <div class="ba" id="heroBA">
+          <img class="ba-img ba-before" alt="before"
+               src="https://images.unsplash.com/photo-1520256862855-398228c41684?w=1600&q=80&auto=format&fit=crop" />
+          <img class="ba-img ba-after" alt="after"
+               src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&q=80&auto=format&fit=crop" />
+          <div class="ba-divider"></div>
+          <div class="ba-handle" aria-label="비교 핸들" role="slider" tabindex="0"></div>
+          <div class="ba-badge before">Before</div>
+          <div class="ba-badge after">After</div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- What you can do with aqua.ai -->
-    <section class="section">
-      <div class="container">
-        <h2 class="sec-title">What you can do with aqua.ai</h2>
-
-        <!-- AI 1. 색상 복원 -->
-        <div class="split">
-          <div class="split-text">
-            <h3>AI 1. 색상을 복원합니다</h3>
-            <ul class="bullet">
-              <li><b>무엇을 해결?</b> 수중에서 사라지는 적/난색 스펙트럼을 복원해 녹/청 캐스트를 제거합니다.</li>
-              <li><b>알고리즘:</b> 수심 추정 → 화이트 밸런스 교정 → 스펙트럼 보정 + 피부톤 보호.</li>
-              <li><b>권장 입력:</b> RAW/고품질 JPEG(12–48MP), 과도한 샤프닝/필터는 비권장.</li>
-              <li><b>팁:</b> 라이트 사용 컷은 “중간 강도” 프리셋이 자연스럽습니다.</li>
-            </ul>
-          </div>
-          <div class="split-visual card">
-            <div class="ba" data-before="https://cdn.aqua.ai/examples/color_before.jpg" data-after="https://cdn.aqua.ai/examples/color_after.jpg" data-aspect="4/3">
-              <div class="ba-after"><img alt="After"></div>
-              <div class="ba-before"><img alt="Before"></div>
-              <i class="ba-divider"></i><i class="ba-handle"></i>
-              <span class="badge before">Before</span><span class="badge after">After</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- AI 2. 부유물 제거 -->
-        <div class="split reverse">
-          <div class="split-text">
-            <h3>AI 2. 부유물을 제거합니다</h3>
-            <ul class="bullet">
-              <li><b>무엇을 해결?</b> 스트로브/라이트로 생기는 부유물 입자 반사.</li>
-              <li><b>알고리즘:</b> 입자 마스크 추정 → 공간 적응형 디노이즈 + 복원.</li>
-              <li><b>권장 입력:</b> 광량 충분 + ISO &lt; 1600.</li>
-              <li><b>팁:</b> Dehaze 옵션과 함께 쓰면 색 대비가 살아나요.</li>
-            </ul>
-          </div>
-          <div class="split-visual card">
-            <div class="ba" data-before="https://cdn.aqua.ai/examples/dehaze_before.jpg" data-after="https://cdn.aqua.ai/examples/dehaze_after.jpg" data-aspect="4/3">
-              <div class="ba-after"><img alt="After"></div>
-              <div class="ba-before"><img alt="Before"></div>
-              <i class="ba-divider"></i><i class="ba-handle"></i>
-              <span class="badge before">Before</span><span class="badge after">After</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- AI 3. 잔상 복원 -->
-        <div class="split">
-          <div class="split-text">
-            <h3>AI 3. 잔상을 복원합니다</h3>
-            <ul class="bullet">
-              <li><b>무엇을 해결?</b> 얕은 흔들림·모션 블러.</li>
-              <li><b>알고리즘:</b> 비선형 디블러 + 구조 유지 안정화.</li>
-              <li><b>권장 입력:</b> 셔터 1/60s 이상, 과도한 흔들림 컷은 제한.</li>
-              <li><b>팁:</b> 사람/생물 피사체에 특히 효과적.</li>
-            </ul>
-          </div>
-          <div class="split-visual card">
-            <div class="ba" data-before="https://cdn.aqua.ai/examples/deblur_before.jpg" data-after="https://cdn.aqua.ai/examples/deblur_after.jpg" data-aspect="4/3">
-              <div class="ba-after"><img alt="After"></div>
-              <div class="ba-before"><img alt="Before"></div>
-              <i class="ba-divider"></i><i class="ba-handle"></i>
-              <span class="badge before">Before</span><span class="badge after">After</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- AI 4. 해상도 업 -->
-        <div class="split reverse">
-          <div class="split-text">
-            <h3>AI 4. 해상도를 높입니다</h3>
-            <ul class="bullet">
-              <li><b>무엇을 해결?</b> 디테일 부족·노이즈 증폭 문제 없이 4× 업스케일.</li>
-              <li><b>알고리즘:</b> 텍스처 보강 + 노이즈 억제 동시 최적화.</li>
-              <li><b>권장 출력:</b> 웹 2560px, 인화 A3 이상은 4K 권장.</li>
-              <li><b>팁:</b> 먼저 색/부유물/흔들림을 처리한 뒤 업스케일을 마지막에.</li>
-            </ul>
-          </div>
-          <div class="split-visual card">
-            <div class="ba" data-before="https://cdn.aqua.ai/examples/sr_before.jpg" data-after="https://cdn.aqua.ai/examples/sr_after.jpg" data-aspect="4/3">
-              <div class="ba-after"><img alt="After"></div>
-              <div class="ba-before"><img alt="Before"></div>
-              <i class="ba-divider"></i><i class="ba-handle"></i>
-              <span class="badge before">Before</span><span class="badge after">After</span>
-            </div>
-          </div>
-        </div>
+  <section class="features">
+    <div class="container">
+      <h2>What you can do with <span class="logo-inline">aqua.ai</span></h2>
+      <div class="cards">
+        <article class="card"><h3>AI 1. 색상을 복원</h3><ul>
+          <li>적/난색 스펙트럼 복원, 녹/청 캐스트 제거</li>
+          <li>화이트밸런스→스펙트럼 보정, 피부 톤 보호</li>
+          <li>권장 입력: RAW / 고품질 JPEG(12–48MP)</li>
+        </ul></article>
+        <article class="card"><h3>AI 2. 부유물 제거</h3><ul>
+          <li>부유물 반사 억제</li><li>입자 마스크 추정 + 적응형 디노이즈</li>
+          <li>팁: Dehaze와 함께 쓰면 대비↑</li>
+        </ul></article>
+        <article class="card"><h3>AI 3. 잔상 복원</h3><ul>
+          <li>흔들림/모션 블러 개선</li><li>비선형 디블러 + 안정화</li>
+          <li>사람/생물 피사체에 효과적</li>
+        </ul></article>
+        <article class="card"><h3>AI 4. 해상도 ↑</h3><ul>
+          <li>노이즈 증폭 없이 4× 업스케일</li>
+          <li>텍스처 보강 + 노이즈 억제</li>
+          <li>웹 2560px, 인화 A3=4K 권장</li>
+        </ul></article>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- How it works -->
-    <section class="section" id="how">
-      <div class="container">
-        <h2 class="sec-title">How it works</h2>
-        <ol class="steps">
-          <li><b>Upload</b> — 사진을 선택/드래그해 업로드합니다.</li>
-          <li><b>Select</b> — 색보정 / 부유물 제거 / 손떨림 복원 / 슈퍼레졸루션 중 선택.</li>
-          <li><b>Enhance</b> — 미리보기를 확인한 뒤 마음에 들면 다운로드하세요.</li>
-        </ol>
-        <p class="note">무료 티어는 워터마크가 적용될 수 있습니다.</p>
+  <section id="pricing" class="pricing">
+    <div class="container">
+      <h2>Pricing</h2>
+      <div class="price-cards">
+        <div class="price-card"><h3>Free</h3><p class="price">$0</p><ul>
+          <li>월 10장</li><li>최대 12MP</li><li>워터마크</li><li>기본 모델 2종</li>
+        </ul><a class="btn btn-ghost" href="/upload.html">시작</a></div>
+        <div class="price-card rec"><div class="badge">추천</div><h3>Basic</h3><p class="price">$13.99/mo</p><ul>
+          <li>70 ops</li><li>워터마크 없음</li><li>4 모델</li><li>최대 48MP</li>
+        </ul><a class="btn btn-primary" href="/upload.html">시작</a></div>
+        <div class="price-card"><h3>Pro</h3><p class="price">$29/mo</p><ul>
+          <li>200 ops</li><li>우선 처리</li><li>배치 업로드</li>
+        </ul><a class="btn btn-ghost" href="/upload.html">시작</a></div>
+        <div class="price-card"><h3>Studio</h3><p class="price">$199/mo</p><ul>
+          <li>무제한</li><li>팀/SLA</li><li>상업용 포함</li>
+        </ul><a class="btn btn-ghost" href="/upload.html">시작</a></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Testimonials -->
-    <section class="section">
-      <div class="container">
-        <h2 class="sec-title">Used and loved by many professionals</h2>
-        <div class="quotes">
-          <blockquote>“전/후 차이가 즉각적이에요. 배치 보정도 유용했습니다.”</blockquote>
-          <blockquote>“수중 인물 사진에서 피부 톤이 자연스럽게 복원돼요.”</blockquote>
-        </div>
-      </div>
-    </section>
+  <footer class="site-footer">
+    <div class="container foot">
+      <span>© aqua.ai — Dive safer, shoot better, edit smarter.</span>
+      <a class="link" href="/upload.html">업로드</a>
+    </div>
+  </footer>
 
-    <!-- CTA -->
-    <section class="cta">
-      <div class="container cta-box">
-        <div>
-          <h3>Ready to elevate your content?</h3>
-          <p class="note">지금 바로 이미지를 업로드하고 차이를 확인해 보세요.</p>
-        </div>
-        <a class="btn primary" href="/upload.html">무료로 시작</a>
-      </div>
-    </section>
-
-    <footer class="footer">
-      <div class="container">© aqua.ai — Dive safer, shoot better, edit smarter.</div>
-    </footer>
-  </main>
-
-  <!-- === 슬라이더 인라인 스크립트 (경로/캐시 문제 회피용) === -->
+  <!-- ClerkJS (Hosted Pages / Dev 키) -->
+  <script async crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
   <script>
-  (function(){
-    // 폭 가변 방식: before 컨테이너의 width를 CSS 변수 --cut 로 제어
+    const CLERK_PORTAL = 'https://profound-labrador-40.clerk.accounts.dev';
+    window.addEventListener('load', async () => {
+      await window.Clerk.load();
+      const box = document.getElementById('auth-box');
+      if (window.Clerk.user) {
+        const n = window.Clerk.user.firstName || window.Clerk.user.username || (window.Clerk.user.emailAddresses?.[0]?.emailAddress ?? '회원');
+        box.innerHTML = `<span class="u-welcome">안녕하세요, ${n}님</span>
+                         <button class="btn btn-xs" id="logoutBtn">로그아웃</button>`;
+        document.getElementById('logoutBtn').onclick = () =>
+          window.Clerk.signOut({ redirectUrl: '/' });
+      } else {
+        box.innerHTML = `<a class="btn btn-xs" href="${CLERK_PORTAL}/sign-in?redirect_url=${encodeURIComponent(location.origin + '/')}">로그인</a>
+                         <a class="btn btn-xs btn-line" href="${CLERK_PORTAL}/sign-up?redirect_url=${encodeURIComponent(location.origin + '/')}">회원가입</a>`;
+      }
+    });
+
+    // 슬라이더
     function mountBA(root){
-      if(!root) return;
-
-      const srcBefore = root.getAttribute('data-before');
-      const srcAfter  = root.getAttribute('data-after');
-      const aspect    = root.getAttribute('data-aspect');
-
-      const wrapAfter = root.querySelector('.ba-after > img');
-      const wrapBefore= root.querySelector('.ba-before > img');
-      const divider   = root.querySelector('.ba-divider');
-      const handle    = root.querySelector('.ba-handle');
-
-      if (srcAfter)  wrapAfter.src  = srcAfter;
-      if (srcBefore) wrapBefore.src = srcBefore;
-      if (aspect && aspect.includes('/')) {
-        const [w,h] = aspect.split('/').map(Number);
-        if (w>0 && h>0) root.style.aspectRatio = w + '/' + h;
-      }
-
-      let current = 0.5; // 50%
-      setCut(current);
-
-      function setCut(p){
-        current = Math.max(0, Math.min(1, p));
-        const pct = (current * 100).toFixed(2) + '%';
-        root.style.setProperty('--cut', pct);
-        if (divider) divider.style.left = pct;
-        if (handle)  handle.style.left  = pct;
-      }
-
-      function rect(){ return root.getBoundingClientRect(); }
-      function toPct(clientX){
-        const r = rect();
-        return (clientX - r.left) / r.width;
-      }
-
-      function onPointer(e){ setCut(toPct(e.clientX)); }
-      function onTouch(e){
-        if(e.touches && e.touches[0]) setCut(toPct(e.touches[0].clientX));
-      }
-
-      root.addEventListener('pointerdown', onPointer);
-      root.addEventListener('pointermove', onPointer);
-      root.addEventListener('mousemove',   onPointer);
-      root.addEventListener('touchstart',  onTouch, {passive:true});
-      root.addEventListener('touchmove',   onTouch, {passive:true});
-
-      // 키보드 접근성
-      root.tabIndex = 0;
-      root.addEventListener('keydown', (e)=>{
-        const step = e.shiftKey ? 0.1 : 0.03;
-        if(e.key === 'ArrowLeft')  setCut(current - step);
-        if(e.key === 'ArrowRight') setCut(current + step);
-      });
+      const before=root.querySelector('.ba-before');
+      const divider=root.querySelector('.ba-divider');
+      const handle=root.querySelector('.ba-handle');
+      let pct=50;
+      const setPct=(p)=>{ pct=Math.max(0,Math.min(100,p));
+        before.style.clipPath=`inset(0 ${100-pct}% 0 0)`; divider.style.left=pct+'%'; handle.style.left=pct+'%';};
+      const rect=()=>root.getBoundingClientRect();
+      const onMove=(x)=>{const r=rect(); const clamped=Math.max(r.left,Math.min(x,r.right));
+        const p=((clamped-r.left)/r.width)*100; setPct(p);};
+      root.addEventListener('mousemove',e=>onMove(e.clientX),{passive:true});
+      root.addEventListener('touchmove',e=>onMove(e.touches[0].clientX),{passive:true});
+      setPct(pct);
     }
-
-    window.addEventListener('DOMContentLoaded', ()=>{
-      document.querySelectorAll('.ba').forEach(mountBA);
-    });
-  })();
+    window.addEventListener('DOMContentLoaded',()=>{ const el=document.getElementById('heroBA'); if(el) mountBA(el); });
   </script>
-
-
-<!-- 6) HEADER AUTH UI -->
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
-  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
-</script>
-<script>
-(async function(){
-  // Clerk 로드
-  await window.Clerk.load();
-
-  // 헤더의 네비게이션 컨테이너 (예: <nav class="actions">)
-  const nav = document.querySelector('.actions');
-  if (!nav) return;
-
-  // 기존에 마운트해둔 UI 제거(중복 방지)
-  nav.querySelectorAll('.auth-mounted').forEach(n => n.remove());
-
-  // UI를 담을 래퍼
-  const wrap = document.createElement('span');
-  wrap.className = 'auth-mounted';
-  wrap.style.display = 'inline-flex';
-  wrap.style.gap = '8px';
-  nav.appendChild(wrap);
-
-  // 로그인 안 된 상태 → "로그인" 버튼 노출
-  if (!window.Clerk.user) {
-    const login = document.createElement('a');
-    login.className = 'btn primary';
-    const redirect = encodeURIComponent(location.pathname + location.search);
-    login.href = '/signin?redirect=' + redirect;
-    login.textContent = '로그인';
-    wrap.appendChild(login);
-    return;
-  }
-
-  // 로그인 된 상태 → 유저 버튼 + 로그아웃
-  const userSlot = document.createElement('span');
-  userSlot.id = 'userbtn';
-  wrap.appendChild(userSlot);
-
-  window.Clerk.mountUserButton(userSlot, {
-    appearance: { variables: { colorPrimary: '#239BA7' } }
-  });
-
-  const logout = document.createElement('button');
-  logout.className = 'btn ghost';
-  logout.type = 'button';
-  logout.textContent = '로그아웃';
-  logout.addEventListener('click', async ()=>{
-    await window.Clerk.signOut();
-    location.reload();
-  });
-  wrap.appendChild(logout);
-})();
-</script>
-
-<!-- 8) WHOAMI TEST (버튼 + 결과 표시 포함) -->
-<style>
-  .whoami-card{
-    margin:16px 0; padding:12px;
-    border:1px solid rgba(255,255,255,.12); border-radius:12px;
-    background:rgba(255,255,255,.05); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-    white-space:pre-wrap; color:#dbeafe;
-  }
-</style>
-
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_여기에_Clerk_Publishable_Key"
-  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
-</script>
-
-<div style="margin-top:16px; display:flex; gap:8px; align-items:center;">
-  <button class="btn ghost" type="button" onclick="testWhoAmI()">내 정보 확인</button>
-  <span class="note">콘솔/아래 박스에 응답이 표시됩니다.</span>
-</div>
-<pre id="whoamiBox" class="whoami-card" style="display:none"></pre>
-
-<script>
-async function testWhoAmI(){
-  try{
-    await window.Clerk.load();
-    const box = document.getElementById('whoamiBox');
-    box.style.display = 'block';
-    box.textContent = '요청 중…';
-
-    if(!window.Clerk.user){
-      box.textContent = '로그인이 필요합니다.';
-      return;
-    }
-
-    // Clerk JWT 발급 (JWT 템플릿 이름은 Clerk 대시보드에서 생성한 값과 일치해야 합니다. 예: "backend")
-    const token = await window.Clerk.session.getToken({ template: 'backend' });
-    if(!token){
-      box.textContent = '토큰 발급 실패';
-      return;
-    }
-
-    const r = await fetch('/api/whoami', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    const j = await r.json();
-
-    box.textContent = JSON.stringify(j, null, 2);
-    console.log('[whoami]', j);
-  }catch(err){
-    console.error('[whoami] error', err);
-    const box = document.getElementById('whoamiBox');
-    if(box){ box.style.display='block'; box.textContent = '오류: ' + (err?.message || err); }
-  }
-}
-</script>
 </body>
 </html>

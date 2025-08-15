@@ -2,165 +2,132 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>업로드 • aqua.ai</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>aqua.ai — 업로드</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <header class="sitebar">
+  <header class="site-header">
     <div class="container nav">
-      <div class="brand"><a href="/">aqua.ai</a></div>
-      <div class="actions">
-        <a class="btn ghost" href="/">홈</a>
-        <a class="btn primary" href="/upload.html">업로드</a>
-      </div>
+      <a class="logo" href="/">aqua.ai</a>
+      <nav class="nav-actions">
+        <a class="link" href="/">홈</a>
+        <span class="divider"></span>
+        <span id="auth-box" class="auth-box">로그인 로딩…</span>
+      </nav>
     </div>
   </header>
 
-  <main class="container upload-wrap">
-    <h1 style="margin:0 0 16px;">업로드</h1>
-    <form class="form" id="uform">
-      <input id="file" type="file" accept="image/*" />
-      <button class="btn primary" type="submit">업로드</button>
-      <span id="msg" class="note"></span>
-      <div class="progress" style="width:100%"><i id="bar"></i></div>
-    </form>
+  <main class="container page">
+    <h1 class="page-title">업로드</h1>
 
-    <div id="result" class="card" style="margin-top:16px; display:none;"></div>
+    <div id="need-auth" class="panel" hidden>
+      <p class="muted">이 기능은 로그인 후 이용할 수 있습니다.</p>
+      <div class="cta-row">
+        <a id="loginLink" class="btn btn-primary">로그인</a>
+        <a id="signupLink" class="btn btn-ghost">회원가입</a>
+      </div>
+    </div>
+
+    <div id="uploader" class="panel" hidden>
+      <form id="form" class="upload-form">
+        <input id="file" type="file" accept="image/*" />
+        <button class="btn btn-primary" type="submit">업로드</button>
+      </form>
+      <progress id="prog" value="0" max="100" class="progress"></progress>
+      <p id="msg" class="muted"></p>
+      <div id="result" class="result"></div>
+    </div>
   </main>
 
-  <footer class="footer container">© aqua.ai</footer>
+  <footer class="site-footer">
+    <div class="container foot">
+      <span>© aqua.ai</span>
+    </div>
+  </footer>
+
+  <script async crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
 
   <script>
-    const byId = (id)=> document.getElementById(id);
+    const CLERK_PORTAL = 'https://profound-labrador-40.clerk.accounts.dev';
 
-    async function presign(filename, contentType){
-      const r = await fetch('/api/presign-put', {
-        method:'POST',
-        headers:{ 'content-type':'application/json' },
-        body: JSON.stringify({ filename, contentType })
-      });
-      if(!r.ok) throw new Error('presign 실패');
-      return r.json(); // { url, key, publicUrl? }
+    async function ensureAuthUI(){
+      await window.Clerk.load();
+      const user = window.Clerk.user;
+      const authBox = document.getElementById('auth-box');
+      const need = document.getElementById('need-auth');
+      const up = document.getElementById('uploader');
+
+      if(user){
+        const name = user.firstName || user.username || (user.emailAddresses?.[0]?.emailAddress ?? '회원');
+        authBox.innerHTML = `<span class="u-welcome">안녕하세요, ${name}님</span>
+                             <button class="btn btn-xs" id="logoutBtn">로그아웃</button>`;
+        document.getElementById('logoutBtn').onclick = () =>
+          window.Clerk.signOut({ redirectUrl: '/upload.html' });
+        need.hidden = true; up.hidden = false;
+      }else{
+        authBox.innerHTML = `<a class="btn btn-xs" href="${CLERK_PORTAL}/sign-in?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}">로그인</a>
+                             <a class="btn btn-xs btn-line" href="${CLERK_PORTAL}/sign-up?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}">회원가입</a>`;
+        up.hidden = true; need.hidden = false;
+        document.getElementById('loginLink').href = `${CLERK_PORTAL}/sign-in?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}`;
+        document.getElementById('signupLink').href = `${CLERK_PORTAL}/sign-up?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}`;
+      }
     }
 
-    async function uploadToS3(url, file, onProgress){
-      return new Promise((resolve, reject)=>{
+    async function presign(file, token){
+      const r = await fetch('/api/presign-put', {
+        method:'POST',
+        headers:{
+          'content-type':'application/json',
+          ...(token ? { 'authorization': 'Bearer ' + token } : {})
+        },
+        body: JSON.stringify({ filename: file.name, contentType: file.type })
+      });
+      if(!r.ok) throw new Error('presign failed: ' + r.status);
+      return r.json(); // { url }
+    }
+
+    function putToS3(url, file, onProgress){
+      return new Promise((resolve,reject)=>{
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', url, true);
-        xhr.upload.onprogress = (e)=>{
-          if(e.lengthComputable && onProgress){
-            onProgress(e.loaded / e.total);
-          }
-        };
-        xhr.onload = ()=> (xhr.status>=200 && xhr.status<300) ? resolve() : reject(new Error('S3 PUT '+xhr.status));
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.upload.onprogress = (e)=>{ if(e.lengthComputable) onProgress(Math.round((e.loaded/e.total)*100)); };
+        xhr.onload = ()=> (xhr.status>=200 && xhr.status<300) ? resolve() : reject(new Error('S3 PUT ' + xhr.status));
         xhr.onerror = ()=> reject(new Error('네트워크 오류'));
-        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
         xhr.send(file);
       });
     }
 
-    byId('uform').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const f = byId('file').files?.[0];
-      if(!f){ byId('msg').textContent='파일을 선택하세요'; return; }
-      byId('msg').textContent='';
-      byId('bar').style.width='0%';
+    window.addEventListener('load', async ()=>{
+      await ensureAuthUI();
 
-      try{
-        const meta = await presign(f.name, f.type);
-        await uploadToS3(meta.url, f, (p)=> byId('bar').style.width = Math.round(p*100)+'%');
+      const form = document.getElementById('form');
+      const file = document.getElementById('file');
+      const prog = document.getElementById('prog');
+      const msg = document.getElementById('msg');
+      const result = document.getElementById('result');
 
-        const link = meta.publicUrl || meta.key || meta.url.split('?')[0];
-        byId('result').style.display='block';
-        byId('result').innerHTML = `
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-            <div>
-              <div style="font-weight:700">업로드 완료</div>
-              <div class="note">${f.name} • ${Math.round(f.size/1024)} KB</div>
-            </div>
-            <a class="btn primary" href="${link}" target="_blank">파일 열기</a>
-          </div>
-        `;
-      }catch(err){
-        byId('msg').textContent = '오류: ' + (err?.message || err);
-      }
+      form?.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        result.innerHTML=''; msg.textContent=''; prog.value=0;
+
+        const f = file.files?.[0];
+        if(!f){ msg.textContent='파일을 선택하세요.'; return; }
+
+        try{
+          const token = window.Clerk.session ? await window.Clerk.session.getToken() : null;
+          const { url } = await presign(f, token);
+          await putToS3(url, f, (p)=> prog.value=p);
+          msg.textContent='업로드 완료!';
+          result.innerHTML = `<a class="link" href="${url.split('?')[0]}" target="_blank" rel="noreferrer">파일 열기</a>`;
+        }catch(err){
+          msg.textContent='오류: ' + (err?.message||err);
+        }
+      });
     });
   </script>
-
-  <!-- 6) HEADER AUTH UI -->
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
-  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
-</script>
-<script>
-(async function(){
-  // Clerk 로드
-  await window.Clerk.load();
-
-  // 헤더의 네비게이션 컨테이너 (예: <nav class="actions">)
-  const nav = document.querySelector('.actions');
-  if (!nav) return;
-
-  // 기존에 마운트해둔 UI 제거(중복 방지)
-  nav.querySelectorAll('.auth-mounted').forEach(n => n.remove());
-
-  // UI를 담을 래퍼
-  const wrap = document.createElement('span');
-  wrap.className = 'auth-mounted';
-  wrap.style.display = 'inline-flex';
-  wrap.style.gap = '8px';
-  nav.appendChild(wrap);
-
-  // 로그인 안 된 상태 → "로그인" 버튼 노출
-  if (!window.Clerk.user) {
-    const login = document.createElement('a');
-    login.className = 'btn primary';
-    const redirect = encodeURIComponent(location.pathname + location.search);
-    login.href = '/signin?redirect=' + redirect;
-    login.textContent = '로그인';
-    wrap.appendChild(login);
-    return;
-  }
-
-  // 로그인 된 상태 → 유저 버튼 + 로그아웃
-  const userSlot = document.createElement('span');
-  userSlot.id = 'userbtn';
-  wrap.appendChild(userSlot);
-
-  window.Clerk.mountUserButton(userSlot, {
-    appearance: { variables: { colorPrimary: '#239BA7' } }
-  });
-
-  const logout = document.createElement('button');
-  logout.className = 'btn ghost';
-  logout.type = 'button';
-  logout.textContent = '로그아웃';
-  logout.addEventListener('click', async ()=>{
-    await window.Clerk.signOut();
-    location.reload();
-  });
-  wrap.appendChild(logout);
-})();
-</script>
-
-<!-- 7) UPLOAD PAGE GUARD -->
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
-  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
-</script>
-<script>
-(async function(){
-  await window.Clerk.load();
-  if (!window.Clerk.user) {
-    const back = encodeURIComponent(location.pathname + location.search || '/upload.html');
-    location.href = '/signin?redirect=' + back;
-  }
-})();
-</script>
 </body>
 </html>
