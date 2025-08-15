@@ -1,80 +1,54 @@
+// api/presign-put.js
+import crypto from "crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-// 필요한 환경변수 (Vercel Project Settings → Environment Variables)
-// AWS_REGION        (예: us-east-1)
-// S3_BUCKET         (예: aqua.ai-output)  ← 점(.) 포함 버킷도 OK
-// AWS_ACCESS_KEY_ID
-// AWS_SECRET_ACCESS_KEY
-// (선택) CDN_BASE   (예: https://xxxx.cloudfront.net)
+const REGION = process.env.S3_REGION;
+const BUCKET = process.env.S3_BUCKET;
+const PUBLIC_BASE =
+  process.env.CDN_BASE ||
+  (REGION && BUCKET
+    ? `https://${BUCKET}.s3.${REGION}.amazonaws.com`
+    : "");
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  // 점(.) 포함 버킷 호환을 위해 path-style 강제 (중요)
-  forcePathStyle: true,
-  credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY ? {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  } : undefined
-});
+const s3 = new S3Client({ region: REGION });
+
+function safeName(name = "image.jpg") {
+  return name.replace(/[^\w.\-]+/g, "_").slice(-120);
+}
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
-
-  if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "POST")    return res.status(405).json({ error: "Method not allowed" });
-
+  if (req.method !== "POST") return res.status(405).end();
   try {
-    const { filename, type, size } = await readJson(req);
-    if (!filename || !type || !size) {
-      return res.status(400).json({ error: "filename, type, size are required" });
-    }
-    if (!type.startsWith("image/")) {
-      return res.status(400).json({ error: "only image/* allowed" });
-    }
-    if (!process.env.S3_BUCKET || !process.env.AWS_REGION) {
-      return res.status(500).json({ error: "server env not configured" });
+    const { filename = "image.jpg", contentType = "application/octet-stream" } =
+      req.body || {};
+
+    if (!REGION || !BUCKET) {
+      return res
+        .status(500)
+        .json({ error: "S3 configs missing (S3_REGION/S3_BUCKET)" });
     }
 
-    const key = makeKey(filename);
+    const now = new Date();
+    const yyyy = String(now.getUTCFullYear());
+    const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(now.getUTCDate()).padStart(2, "0");
+    const rnd = crypto.randomBytes(4).toString("hex");
+    const base = safeName(filename);
+    const key = `uploads/${yyyy}/${mm}/${dd}/${Date.now()}-${rnd}/${base}`;
+
     const cmd = new PutObjectCommand({
-      Bucket: process.env.S3_BUCKET,
+      Bucket: BUCKET,
       Key: key,
-      ContentType: type
+      ContentType: contentType,
     });
 
-    // 5분 유효
-    const uploadUrl = await getSignedUrl(s3, cmd, { expiresIn: 60 * 5 });
+    const url = await getSignedUrl(s3, cmd, { expiresIn: 900 }); // 15분
+    const publicUrl = PUBLIC_BASE ? `${PUBLIC_BASE}/${key}` : "";
 
-    // 보기/다운로드용 공개 URL (CloudFront 있으면 그걸 우선)
-    const base = process.env.CDN_BASE
-      || `https://s3.${process.env.AWS_REGION}.amazonaws.com/${process.env.S3_BUCKET}`;
-    const publicUrl = `${base}/${encodeURI(key)}`;
-
-    res.setHeader("Cache-Control", "no-store");
-    return res.status(200).json({ uploadUrl, key, publicUrl });
+    return res.json({ url, key, publicUrl });
   } catch (err) {
-    console.error("[presign-put] error:", err);
-    return res.status(500).json({ error: "presign_failed" });
+    console.error("presign error", err);
+    return res.status(500).json({ error: err?.message || String(err) });
   }
-}
-
-function readJson(req) {
-  return new Promise((resolve, reject) => {
-    let b = "";
-    req.on("data", c => b += c);
-    req.on("end", () => { try { resolve(b ? JSON.parse(b) : {}); } catch(e){ reject(e); } });
-    req.on("error", reject);
-  });
-}
-
-function makeKey(original) {
-  const clean = String(original).replace(/[^\w.\-() ]+/g, "_").slice(0, 120);
-  const d = new Date(), pad = n => String(n).padStart(2,"0");
-  const stamp = `${d.getUTCFullYear()}/${pad(d.getUTCMonth()+1)}/${pad(d.getUTCDate())}`;
-  const rand = Math.random().toString(36).slice(2,10);
-  return `uploads/${stamp}/${Date.now()}_${rand}_${clean}`;
 }
