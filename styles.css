@@ -17,6 +17,7 @@ body{color:var(--white); background:#0e1320; font:16px/1.6 system-ui,-apple-syst
 .divider{width:1px; height:16px; background:rgba(255,255,255,.12)}
 .auth-box{display:inline-flex; gap:8px; align-items:center; color:#d5e6ec}
 .u-welcome{opacity:.9}
+.plan-tag{display:inline-block; margin-left:6px; padding:2px 6px; font-size:11px; border:1px solid rgba(255,255,255,.14); border-radius:999px; text-transform:capitalize}
 
 /* buttons */
 .btn{display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; text-decoration:none}

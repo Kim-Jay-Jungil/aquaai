@@ -76,18 +76,27 @@
     <div class="container">
       <h2>Pricing</h2>
       <div class="price-cards">
-        <div class="price-card"><h3>Free</h3><p class="price">$0</p><ul>
-          <li>월 10장</li><li>최대 12MP</li><li>워터마크</li><li>기본 모델 2종</li>
-        </ul><a class="btn btn-ghost" href="/upload.html">시작</a></div>
-        <div class="price-card rec"><div class="badge">추천</div><h3>Basic</h3><p class="price">$13.99/mo</p><ul>
-          <li>70 ops</li><li>워터마크 없음</li><li>4 모델</li><li>최대 48MP</li>
-        </ul><a class="btn btn-primary" href="/upload.html">시작</a></div>
-        <div class="price-card"><h3>Pro</h3><p class="price">$29/mo</p><ul>
-          <li>200 ops</li><li>우선 처리</li><li>배치 업로드</li>
-        </ul><a class="btn btn-ghost" href="/upload.html">시작</a></div>
-        <div class="price-card"><h3>Studio</h3><p class="price">$199/mo</p><ul>
-          <li>무제한</li><li>팀/SLA</li><li>상업용 포함</li>
-        </ul><a class="btn btn-ghost" href="/upload.html">시작</a></div>
+        <div class="price-card">
+          <h3>Free</h3><p class="price">$0</p>
+          <ul><li>월 10장</li><li>최대 12MP</li><li>워터마크</li><li>기본 모델 2종</li></ul>
+          <a class="btn btn-ghost" href="/upload.html">시작</a>
+        </div>
+        <div class="price-card rec">
+          <div class="badge">추천</div>
+          <h3>Basic</h3><p class="price">$13.99/mo</p>
+          <ul><li>70 ops</li><li>워터마크 없음</li><li>4 모델</li><li>최대 48MP</li></ul>
+          <a class="btn btn-primary" id="btnUpgradeBasic">업그레이드</a>
+        </div>
+        <div class="price-card">
+          <h3>Pro</h3><p class="price">$29/mo</p>
+          <ul><li>200 ops</li><li>우선 처리</li><li>배치 업로드</li></ul>
+          <a class="btn btn-ghost" id="btnUpgradePro">업그레이드</a>
+        </div>
+        <div class="price-card">
+          <h3>Studio</h3><p class="price">$199/mo</p>
+          <ul><li>무제한</li><li>팀/SLA</li><li>상업용 포함</li></ul>
+          <a class="btn btn-ghost" id="btnUpgradeStudio">업그레이드</a>
+        </div>
       </div>
     </div>
   </section>
@@ -99,28 +108,58 @@
     </div>
   </footer>
 
-  <!-- ClerkJS (Hosted Pages / Dev 키) -->
+  <!-- ClerkJS -->
   <script async crossorigin="anonymous"
     data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
     src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+
   <script>
     const CLERK_PORTAL = 'https://profound-labrador-40.clerk.accounts.dev';
+
+    // Plan/feature 헬퍼 (세션 클레임/메타데이터에서 가능한 키를 최대한 유연하게 읽음)
+    function getPlanAndFeatures() {
+      const claims = (window.Clerk?.session?.claims) || {};
+      const user = window.Clerk?.user || {};
+      const pm = (user.publicMetadata || {});
+      const plan =
+        (claims.subscription_plan || claims.plan || pm.plan || 'free') + '';
+      const features =
+        claims.features || pm.features || {};
+      return { plan: plan.toLowerCase(), features };
+    }
+
     window.addEventListener('load', async () => {
       await window.Clerk.load();
+
+      // 헤더 로그인/플랜 UI
       const box = document.getElementById('auth-box');
       if (window.Clerk.user) {
-        const n = window.Clerk.user.firstName || window.Clerk.user.username || (window.Clerk.user.emailAddresses?.[0]?.emailAddress ?? '회원');
-        box.innerHTML = `<span class="u-welcome">안녕하세요, ${n}님</span>
-                         <button class="btn btn-xs" id="logoutBtn">로그아웃</button>`;
+        const n = window.Clerk.user.firstName || window.Clerk.user.username ||
+                  (window.Clerk.user.emailAddresses?.[0]?.emailAddress ?? '회원');
+        const { plan } = getPlanAndFeatures();
+        box.innerHTML = `
+          <span class="u-welcome">안녕하세요, ${n}님 · <span class="plan-tag">${plan}</span></span>
+          <a class="btn btn-xs btn-line" href="${CLERK_PORTAL}/user">요금제 관리</a>
+          <button class="btn btn-xs" id="logoutBtn">로그아웃</button>`;
         document.getElementById('logoutBtn').onclick = () =>
           window.Clerk.signOut({ redirectUrl: '/' });
       } else {
-        box.innerHTML = `<a class="btn btn-xs" href="${CLERK_PORTAL}/sign-in?redirect_url=${encodeURIComponent(location.origin + '/')}">로그인</a>
-                         <a class="btn btn-xs btn-line" href="${CLERK_PORTAL}/sign-up?redirect_url=${encodeURIComponent(location.origin + '/')}">회원가입</a>`;
+        box.innerHTML = `
+          <a class="btn btn-xs" href="${CLERK_PORTAL}/sign-in?redirect_url=${encodeURIComponent(location.origin + '/')}">로그인</a>
+          <a class="btn btn-xs btn-line" href="${CLERK_PORTAL}/sign-up?redirect_url=${encodeURIComponent(location.origin + '/')}">회원가입</a>`;
       }
+
+      // 가격 카드 업그레이드 버튼은 로그인 상태면 포털로 이동
+      ['Basic','Pro','Studio'].forEach(tier => {
+        const el = document.getElementById('btnUpgrade'+tier);
+        if (!el) return;
+        el.addEventListener('click', () => {
+          location.href = `${CLERK_PORTAL}/user`;
+        });
+      });
     });
 
-    // 슬라이더
+    // BA(전/후) 슬라이더
     function mountBA(root){
       const before=root.querySelector('.ba-before');
       const divider=root.querySelector('.ba-divider');
