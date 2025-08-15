@@ -3,178 +3,74 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>aqua.ai — 업로드</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <title>Upload — aqua.ai</title>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div class="container nav">
-      <a class="logo" href="/">aqua.ai</a>
-      <nav class="nav-actions">
-        <a class="link" href="/">홈</a>
-        <span class="divider"></span>
-        <span id="auth-box" class="auth-box">로그인 로딩…</span>
-      </nav>
-    </div>
-  </header>
 
-  <main class="container page">
-    <h1 class="page-title">업로드</h1>
+<header class="site-header">
+  <div class="container nav">
+    <a href="/" class="logo">aqua.ai</a>
+    <nav class="nav-actions">
+      <a class="btn btn-secondary" href="./pricing#">Pricing</a>
+      <a class="btn btn-primary" href="./signin.html">로그인</a>
+    </nav>
+  </div>
+</header>
 
-    <div id="need-auth" class="panel" hidden>
-      <p class="muted">이 기능은 로그인 후 이용할 수 있습니다.</p>
-      <div class="cta-row">
-        <a id="loginLink" class="btn btn-primary">로그인</a>
-        <a id="signupLink" class="btn btn-ghost">회원가입</a>
+<main class="page">
+  <div class="container">
+    <h1 class="page-title">사진 업로드</h1>
+    <div class="panel">
+      <form class="upload-form" onsubmit="return false">
+        <div class="dropzone" role="button" aria-label="Drag and drop images" tabindex="0">
+          <p>클릭 또는 드래그하여 업로드 (JPEG/PNG, 권장 12–48MP)</p>
+          <input id="file" type="file" accept="image/*" hidden />
+        </div>
+
+        <div class="options">
+          <label><input type="checkbox" checked /> 색 보정</label>
+          <label><input type="checkbox" checked /> 부유물 제거</label>
+          <label><input type="checkbox" /> 손떨림 복원</label>
+          <label><input type="checkbox" /> 슈퍼 레졸루션(4×)</label>
+          <button class="btn btn-primary" id="btnEnhance">보정 실행</button>
+          <p class="muted">무료 플랜은 워터마크가 적용됩니다.</p>
+        </div>
+      </form>
+
+      <div class="result">
+        <img id="preview" alt="미리보기" style="display:none; max-width:100%; border-radius:12px; border:1px solid var(--border)" />
+        <div class="ba" id="resultBA" style="display:none; margin-top:12px">
+          <img class="ba-img ba-after"  id="afterImg"  alt="After">
+          <img class="ba-img ba-before" id="beforeImg" alt="Before">
+          <div class="ba-divider"></div>
+          <div class="ba-handle"></div>
+          <span class="ba-badge before">Before</span>
+          <span class="ba-badge after">After</span>
+        </div>
       </div>
     </div>
+  </div>
+</main>
 
-    <div id="uploader" class="panel" hidden>
-      <form id="form" class="upload-form">
-        <input id="file" type="file" accept="image/*" />
-        <button class="btn btn-primary" type="submit">업로드</button>
-      </form>
-      <progress id="prog" value="0" max="100" class="progress"></progress>
-      <p id="msg" class="muted"></p>
-      <div id="result" class="result"></div>
-    </div>
-  </main>
+<footer class="site-footer">
+  <div class="container foot">
+    <small>© aqua.ai</small>
+    <a class="btn btn-secondary btn-xs" href="./index.html">홈으로</a>
+  </div>
+</footer>
 
-  <footer class="site-footer">
-    <div class="container foot">
-      <span>© aqua.ai</span>
-    </div>
-  </footer>
-
-  <script async crossorigin="anonymous"
-    data-clerk-publishable-key="pk_test_cHJvZm91bmQtbGFicmFkb3ItNDAuY2xlcmsuYWNjb3VudHMuZGV2JA"
-    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
-
-  <script>
-    const CLERK_PORTAL = 'https://profound-labrador-40.clerk.accounts.dev';
-
-    function getPlanAndFeatures() {
-      const claims = (window.Clerk?.session?.claims) || {};
-      const user = window.Clerk?.user || {};
-      const pm = (user.publicMetadata || {});
-      const plan =
-        (claims.subscription_plan || claims.plan || pm.plan || 'free') + '';
-      const features =
-        claims.features || pm.features || {};
-      return { plan: plan.toLowerCase(), features };
-    }
-
-    async function ensureAuthUI(){
-      await window.Clerk.load();
-      const user = window.Clerk.user;
-      const authBox = document.getElementById('auth-box');
-      const need = document.getElementById('need-auth');
-      const up = document.getElementById('uploader');
-
-      if(user){
-        const n = user.firstName || user.username || (user.emailAddresses?.[0]?.emailAddress ?? '회원');
-        const { plan } = getPlanAndFeatures();
-        authBox.innerHTML = `
-          <span class="u-welcome">안녕하세요, ${n}님 · <span class="plan-tag">${plan}</span></span>
-          <a class="btn btn-xs btn-line" href="${CLERK_PORTAL}/user">요금제 관리</a>
-          <button class="btn btn-xs" id="logoutBtn">로그아웃</button>`;
-        document.getElementById('logoutBtn').onclick = () =>
-          window.Clerk.signOut({ redirectUrl: '/upload.html' });
-        need.hidden = true; up.hidden = false;
-      }else{
-        authBox.innerHTML = `
-          <a class="btn btn-xs" href="${CLERK_PORTAL}/sign-in?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}">로그인</a>
-          <a class="btn btn-xs btn-line" href="${CLERK_PORTAL}/sign-up?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}">회원가입</a>`;
-        up.hidden = true; need.hidden = false;
-        document.getElementById('loginLink').href = `${CLERK_PORTAL}/sign-in?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}`;
-        document.getElementById('signupLink').href = `${CLERK_PORTAL}/sign-up?redirect_url=${encodeURIComponent(location.origin + '/upload.html')}`;
-      }
-    }
-
-    // 이미지 MP 측정 → 플랜 제한 체크
-    function imageMP(file){
-      return new Promise((resolve,reject)=>{
-        const url = URL.createObjectURL(file);
-        const img = new Image();
-        img.onload = ()=>{ resolve((img.width*img.height)/1e6); URL.revokeObjectURL(url); };
-        img.onerror = reject;
-        img.src = url;
-      });
-    }
-
-    function limitsFor(plan){
-      // Clerk Features로 더 정교하게도 가능하지만, 우선 플랜 문자열 기반 기본 제한
-      const map = {
-        free:   { maxMp: 12, watermark: true },
-        basic:  { maxMp: 48, watermark: false },
-        pro:    { maxMp: 48, watermark: false },
-        studio: { maxMp: 100, watermark: false }
-      };
-      return map[plan] || map.free;
-    }
-
-    async function presign(file, token){
-      const r = await fetch('/api/presign-put', {
-        method:'POST',
-        headers:{
-          'content-type':'application/json',
-          ...(token ? { 'authorization': 'Bearer ' + token } : {})
-        },
-        body: JSON.stringify({ filename: file.name, contentType: file.type })
-      });
-      if(!r.ok) throw new Error('presign failed: ' + r.status);
-      return r.json(); // { url }
-    }
-
-    function putToS3(url, file, onProgress){
-      return new Promise((resolve,reject)=>{
-        const xhr = new XMLHttpRequest();
-        xhr.open('PUT', url, true);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.upload.onprogress = (e)=>{ if(e.lengthComputable) onProgress(Math.round((e.loaded/e.total)*100)); };
-        xhr.onload = ()=> (xhr.status>=200 && xhr.status<300) ? resolve() : reject(new Error('S3 PUT ' + xhr.status));
-        xhr.onerror = ()=> reject(new Error('네트워크 오류'));
-        xhr.send(file);
-      });
-    }
-
-    window.addEventListener('load', async ()=>{
-      await ensureAuthUI();
-
-      const form = document.getElementById('form');
-      const file = document.getElementById('file');
-      const prog = document.getElementById('prog');
-      const msg = document.getElementById('msg');
-      const result = document.getElementById('result');
-
-      form?.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        result.innerHTML=''; msg.textContent=''; prog.value=0;
-
-        const f = file.files?.[0];
-        if(!f){ msg.textContent='파일을 선택하세요.'; return; }
-
-        try{
-          // 플랜 제한 체크
-          const { plan } = getPlanAndFeatures();
-          const lim = limitsFor(plan);
-          const mp = await imageMP(f);
-          if (mp > lim.maxMp){
-            msg.innerHTML = `이 플랜의 해상도 한도(${lim.maxMp}MP)를 초과했습니다. 
-              (선택 이미지: ${mp.toFixed(1)}MP) → <a class="link" href="${CLERK_PORTAL}/user" target="_blank">업그레이드</a>`;
-            return;
-          }
-
-          const token = window.Clerk.session ? await window.Clerk.session.getToken() : null;
-          const { url } = await presign(f, token);
-          await putToS3(url, f, (p)=> prog.value=p);
-          msg.textContent='업로드 완료!';
-          result.innerHTML = `<a class="link" href="${url.split('?')[0]}" target="_blank" rel="noreferrer">파일 열기</a>`;
-        }catch(err){
-          msg.textContent='오류: ' + (err?.message||err);
-        }
-      });
-    });
-  </script>
+<script src="./app.js"></script>
+<script>
+  // Demo: 업로드 후 전/후에 같은 이미지를 사용(백엔드 연동 시 교체)
+  document.getElementById('btnEnhance').addEventListener('click', ()=>{
+    const f = document.getElementById('file').files?.[0];
+    if(!f){ alert('이미지를 선택하세요.'); return; }
+    const url = URL.createObjectURL(f);
+    document.getElementById('beforeImg').src = url;
+    document.getElementById('afterImg').src  = url; // TODO: 보정 결과 URL로 교체
+    document.getElementById('resultBA').style.display='block';
+  });
+</script>
 </body>
 </html>
