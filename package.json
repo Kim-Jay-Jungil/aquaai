@@ -1,21 +1,14 @@
 {
   "name": "aquaai",
   "private": true,
+  "type": "module",
+  "engines": { "node": "20.x" },
   "scripts": {
-    "build": "echo 'Build completed'",
-    "dev": "vercel dev",
-    "deploy": "vercel --prod"
-  },
-  "engines": {
-    "node": "20.x"
+    "build": "echo \"no-op\""
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.637.0",
     "@aws-sdk/s3-request-presigner": "^3.637.0",
-    "@notionhq/client": "^2.2.14",
-    "sharp": "^0.33.2"
-  },
-  "devDependencies": {
-    "vercel": "^33.5.1"
+    "@clerk/backend": "^1.7.0"
   }
 }

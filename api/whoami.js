@@ -1,19 +1,27 @@
-// api/whoami.js
+import { verifyToken } from '@clerk/backend';
+
 export default async function handler(req, res) {
   try {
-    const present = (v) => Boolean(v);
+    let userId = null;
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+    if (process.env.CLERK_SECRET_KEY && token) {
+      const claims = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
+      userId = claims?.sub ?? null;
+    }
 
     res.status(200).json({
       ok: true,
-      userId: null,          // 인증은 아직 사용 안 함(공개 모드)
+      userId,
       env: {
-        AWS_REGION: present(process.env.AWS_REGION),
-        S3_BUCKET: present(process.env.S3_BUCKET),
+        AWS_REGION: !!process.env.AWS_REGION,
+        S3_BUCKET: !!process.env.S3_BUCKET,
         S3_PREFIX: process.env.S3_PREFIX || 'uploads',
-        CDN_BASE: process.env.CDN_BASE || null,
-      },
+        CDN_BASE: process.env.CDN_BASE || null
+      }
     });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  } catch {
+    res.status(200).json({ ok: true, userId: null, note: 'public mode' });
   }
 }
