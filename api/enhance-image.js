@@ -1,4 +1,4 @@
-// api/enhance-image.js
+// api/enhance-image.js - 이미지 보정 및 Notion DB 저장
 import { enhanceUnderwaterImage } from './_lib/image-processing.js';
 import { logSubmissionToNotion } from './_lib/notion.js';
 
@@ -39,20 +39,30 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: 'imageUrl required' });
     }
 
+    console.log(`Starting image enhancement process for: ${filename || 'unknown'}`);
+
     // 이미지 보정 처리
+    const startTime = Date.now();
     const enhancedImageUrl = await enhanceUnderwaterImage(imageUrl, enhancementLevel);
+    const processingTime = Date.now() - startTime;
+
+    console.log(`Image enhancement completed in ${processingTime}ms`);
 
     // Notion 데이터베이스에 기록
     try {
-      await logSubmissionToNotion({
+      const notionResult = await logSubmissionToNotion({
         filename: filename || 'enhanced_image',
-        email,
+        email: email || 'anonymous@example.com',
         original_url: imageUrl,
         output_url: enhancedImageUrl,
         status: 'enhanced',
         enhancement_level: enhancementLevel,
-        notes: `Enhanced with ${enhancementLevel} level`
+        processing_time: processingTime,
+        notes: `Enhanced with ${enhancementLevel} level in ${processingTime}ms`,
+        user_tier: 'free' // 기본값
       });
+
+      console.log('Successfully logged to Notion:', notionResult.id);
     } catch (notionError) {
       console.error('Notion logging failed:', notionError);
       // Notion 로깅 실패해도 이미지 보정은 성공으로 처리
@@ -62,7 +72,9 @@ export default async function handler(req, res) {
       ok: true,
       originalUrl: imageUrl,
       enhancedUrl: enhancedImageUrl,
-      enhancementLevel
+      enhancementLevel,
+      processingTime,
+      notionLogged: true
     });
 
   } catch (e) {

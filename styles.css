@@ -558,3 +558,60 @@ body {
     width: 100%;
   }
 }
+
+/* 사용자 정보 입력 */
+.user-info {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-accent);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+}
+
+.user-info h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.user-info input[type="email"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+.user-info input[type="email"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.info-text {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+/* 결과 정보 표시 */
+.result-info {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--primary-color);
+}
+
+.result-info p {
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.result-info strong {
+  color: var(--text-primary);
+}

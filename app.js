@@ -1,4 +1,4 @@
-// app.js - 메인 웹사이트 JavaScript
+// app.js - 메인 웹사이트 JavaScript (이미지 업로드 → 보정 → Notion 저장)
 (function () {
   // DOM 요소들
   const $fileInput = document.getElementById('fileInput');
@@ -8,6 +8,7 @@
   const $resultsSection = document.getElementById('resultsSection');
   const $resultsGrid = document.getElementById('resultsGrid');
   const $optionButtons = document.querySelectorAll('.option-btn');
+  const $userEmail = document.getElementById('userEmail');
   
   // 상태 변수들
   let selectedFiles = [];
@@ -116,7 +117,7 @@
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // 이미지 보정 시작
+  // 이미지 보정 시작 (전체 플로우)
   async function startEnhancement() {
     if (selectedFiles.length === 0 || isProcessing) return;
 
@@ -127,6 +128,7 @@
 
     try {
       const results = [];
+      const userEmail = $userEmail.value.trim() || 'anonymous@example.com';
       
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
@@ -134,17 +136,23 @@
         // 진행률 업데이트
         updateProgress((i / selectedFiles.length) * 100);
         
+        console.log(`Processing file ${i + 1}/${selectedFiles.length}: ${file.name}`);
+        
         // 1. S3에 업로드
         const uploadResult = await uploadToS3(file);
+        console.log('File uploaded to S3:', uploadResult.publicUrl);
         
-        // 2. 이미지 보정
-        const enhanceResult = await enhanceImage(uploadResult.publicUrl, file.name);
+        // 2. 이미지 보정 및 Notion DB 저장
+        const enhanceResult = await enhanceImage(uploadResult.publicUrl, file.name, userEmail);
+        console.log('Image enhancement completed:', enhanceResult);
         
         results.push({
           originalFile: file,
           originalUrl: uploadResult.publicUrl,
           enhancedUrl: enhanceResult.enhancedUrl,
-          filename: file.name
+          filename: file.name,
+          processingTime: enhanceResult.processingTime,
+          notionLogged: enhanceResult.notionLogged
         });
       }
 
@@ -153,6 +161,9 @@
       await new Promise(resolve => setTimeout(resolve, 500)); // 진행률 바 완료 애니메이션
       
       showResults(results);
+      
+      // 성공 메시지
+      alert(`🎉 ${selectedFiles.length}개 이미지 보정이 완료되었습니다!\n\n모든 결과가 Notion 데이터베이스에 저장되었습니다.`);
       
     } catch (error) {
       console.error('Enhancement failed:', error);
@@ -207,43 +218,39 @@
       
     } catch (error) {
       console.error('S3 upload error:', error);
-      
-      // 사용자 친화적인 에러 메시지
-      let userMessage = '파일 업로드에 실패했습니다.';
-      
-      if (error.message.includes('Environment variables not set')) {
-        userMessage = '서버 설정 오류: 관리자에게 문의하세요.';
-      } else if (error.message.includes('access denied')) {
-        userMessage = '접근 권한 오류: AWS 설정을 확인하세요.';
-      } else if (error.message.includes('bucket not found')) {
-        userMessage = '저장소 오류: S3 버킷 설정을 확인하세요.';
-      } else if (error.message.includes('network')) {
-        userMessage = '네트워크 오류: 인터넷 연결을 확인하세요.';
-      }
-      
-      throw new Error(userMessage);
+      throw new Error(`S3 업로드 실패: ${error.message}`);
     }
   }
 
-  // 이미지 보정 API 호출
-  async function enhanceImage(imageUrl, filename) {
+  // 이미지 보정 API 호출 (Notion DB 저장 포함)
+  async function enhanceImage(imageUrl, filename, email) {
     try {
+      console.log('Starting image enhancement for:', filename);
+      
       const response = await fetch('/api/enhance-image', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           imageUrl,
           filename,
+          email,
           enhancementLevel: selectedEnhancementLevel
         })
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Enhancement failed');
+      
+      if (!response.ok) {
+        console.error('Enhancement API error:', data);
+        throw new Error(data.error || data.detail || 'Enhancement failed');
+      }
 
+      console.log('Image enhancement API response:', data);
       return data;
+      
     } catch (error) {
-      throw new Error(`Image enhancement failed: ${error.message}`);
+      console.error('Image enhancement error:', error);
+      throw new Error(`이미지 보정 실패: ${error.message}`);
     }
   }
 
@@ -277,6 +284,10 @@
             <img src="${result.enhancedUrl}" alt="보정된 이미지" />
             <p class="filename">${result.filename}_enhanced</p>
           </div>
+        </div>
+        <div class="result-info">
+          <p><strong>처리 시간:</strong> ${result.processingTime}ms</p>
+          <p><strong>Notion 저장:</strong> ${result.notionLogged ? '✅ 성공' : '❌ 실패'}</p>
         </div>
         <div class="result-actions">
           <button class="btn btn-small" onclick="downloadImage('${result.enhancedUrl}', '${result.filename}_enhanced')">
