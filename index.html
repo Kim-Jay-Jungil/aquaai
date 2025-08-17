@@ -1,29 +1,168 @@
-<!-- upload/index.html -->
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>업로드 — aqua.ai</title>
+  <title>Aqua.AI - 수중 사진 자동보정 서비스</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <header class="nav">
-    <a class="brand" href="/">aqua.ai</a>
+    <a class="brand" href="/">Aqua.AI</a>
+    <nav class="nav-links">
+      <a href="/signin.html">로그인</a>
+      <a href="/signup.html">회원가입</a>
+    </nav>
   </header>
 
   <main class="wrap">
-    <h1>업로드</h1>
+    <section class="hero">
+      <h1>수중 사진을 자동으로 보정하세요</h1>
+      <p class="hero-subtitle">
+        AI가 블루/그린 톤을 제거하고 색상을 복원하여 
+        수중에서 찍은 사진을 자연스럽게 만들어드립니다
+      </p>
+    </section>
 
-    <div class="card">
-      <input id="file" type="file" accept="image/*" />
-      <button id="btn" class="btn">업로드</button>
-      <span id="msg" class="muted"></span>
-    </div>
+    <section class="upload-section">
+      <div class="card">
+        <h2>이미지 업로드 및 보정</h2>
+        
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7,10 12,15 17,10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <p>클릭하여 이미지를 선택하거나 드래그하여 업로드하세요</p>
+            <p class="upload-hint">JPG, PNG, HEIC 지원 (최대 10MB)</p>
+          </div>
+          <input id="fileInput" type="file" accept="image/*" multiple />
+        </div>
+
+        <div class="enhancement-options">
+          <h3>보정 강도 선택</h3>
+          <div class="option-buttons">
+            <button class="option-btn active" data-level="auto">자동</button>
+            <button class="option-btn" data-level="light">약함</button>
+            <button class="option-btn" data-level="medium">보통</button>
+            <button class="option-btn" data-level="strong">강함</button>
+          </div>
+        </div>
+
+        <button id="enhanceBtn" class="btn btn-primary" disabled>
+          이미지 보정 시작
+        </button>
+
+        <div id="progressBar" class="progress-bar hidden">
+          <div class="progress-fill"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-section hidden" id="resultsSection">
+      <div class="card">
+        <h2>보정 결과</h2>
+        <div id="resultsGrid" class="results-grid">
+          <!-- 결과 이미지들이 여기에 표시됩니다 -->
+        </div>
+        <div class="results-actions">
+          <button id="downloadAllBtn" class="btn btn-secondary">전체 다운로드</button>
+          <button id="shareBtn" class="btn btn-outline">공유하기</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="card">
+        <h2>서비스 특징</h2>
+        <div class="features-grid">
+          <div class="feature">
+            <h3>🎯 자동 색상 보정</h3>
+            <p>수중 환경의 블루/그린 톤을 자동으로 감지하고 제거</p>
+          </div>
+          <div class="feature">
+            <h3>⚡ 빠른 처리</h3>
+            <p>AI 기반으로 10초 내에 이미지 보정 완료</p>
+          </div>
+          <div class="feature">
+            <h3>📱 모든 기기 지원</h3>
+            <p>모바일, 태블릿, 데스크톱에서 편리하게 사용</p>
+          </div>
+          <div class="feature">
+            <h3>🔒 안전한 저장</h3>
+            <p>업로드된 이미지는 자동으로 삭제되어 개인정보 보호</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pricing">
+      <div class="card">
+        <h2>요금제</h2>
+        <div class="pricing-grid">
+          <div class="pricing-card">
+            <h3>무료</h3>
+            <div class="price">₩0</div>
+            <ul>
+              <li>월 5장 이미지 보정</li>
+              <li>기본 보정 기능</li>
+              <li>웹에서 직접 사용</li>
+            </ul>
+            <button class="btn btn-outline">시작하기</button>
+          </div>
+          <div class="pricing-card featured">
+            <h3>프로</h3>
+            <div class="price">₩19,900<span>/월</span></div>
+            <ul>
+              <li>월 100장 이미지 보정</li>
+              <li>고급 보정 옵션</li>
+              <li>배치 처리</li>
+              <li>우선 지원</li>
+            </ul>
+            <button class="btn btn-primary">프로 시작하기</button>
+          </div>
+          <div class="pricing-card">
+            <h3>비즈니스</h3>
+            <div class="price">₩49,900<span>/월</span></div>
+            <ul>
+              <li>월 1,000장 이미지 보정</li>
+              <li>API 접근</li>
+              <li>전용 지원</li>
+              <li>맞춤형 솔루션</li>
+            </ul>
+            <button class="btn btn-outline">문의하기</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer class="foot">© aqua.ai</footer>
+  <footer class="foot">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Aqua.AI</h4>
+        <p>수중 사진을 아름답게 만드는 AI 서비스</p>
+      </div>
+      <div class="footer-section">
+        <h4>서비스</h4>
+        <a href="/">홈</a>
+        <a href="/upload.html">업로드</a>
+        <a href="/pricing">요금제</a>
+      </div>
+      <div class="footer-section">
+        <h4>지원</h4>
+        <a href="/help">도움말</a>
+        <a href="/contact">문의</a>
+        <a href="/privacy">개인정보처리방침</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      © 2024 Aqua.AI. All rights reserved.
+    </div>
+  </footer>
 
-  <script type="module" src="/upload/app.js"></script>
+  <script type="module" src="/app.js"></script>
 </body>
 </html>
