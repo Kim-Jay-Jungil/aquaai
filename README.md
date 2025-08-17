@@ -20,7 +20,7 @@ AI 기반 수중 사진 자동보정 웹앱 서비스입니다. 블루/그린 �
 ## 🛠️ 기술 스택
 
 - **프론트엔드**: HTML5, CSS3, JavaScript (ES6+)
-- **백엔드**: Vercel Functions
+- **백엔드**: Vercel Functions (Node.js 22.x)
 - **이미지 처리**: Sharp.js
 - **파일 저장**: AWS S3
 - **데이터베이스**: Notion API
@@ -34,12 +34,21 @@ git clone https://github.com/your-username/aquaai.git
 cd aquaai
 ```
 
-### 2. 의존성 설치
+### 2. Node.js 버전 확인
+```bash
+# Node.js 22.x 필요
+node --version  # v22.x.x
+
+# nvm 사용 시
+nvm use 22
+```
+
+### 3. 의존성 설치
 ```bash
 npm install
 ```
 
-### 3. 환경 변수 설정
+### 4. 환경 변수 설정
 `.env.local` 파일을 생성하고 다음 변수들을 설정하세요:
 
 ```bash
@@ -53,14 +62,11 @@ AWS_SECRET_ACCESS_KEY=your-secret-key
 NOTION_TOKEN=your-notion-integration-token
 NOTION_DB_ID=your-database-id
 
-# CDN 설정 (선택사항)
-CDN_BASE=https://your-cdn-domain.com
-
 # S3 파일 접두사
 S3_PREFIX=uploads
 ```
 
-### 4. Notion 데이터베이스 설정
+### 5. Notion 데이터베이스 설정
 
 1. [Notion Developers](https://developers.notion.com/)에서 새 Integration 생성
 2. Integration Token 복사
@@ -80,19 +86,19 @@ S3_PREFIX=uploads
 5. Integration을 데이터베이스에 연결
 6. 데이터베이스 ID 복사 (URL에서 추출)
 
-### 5. AWS S3 설정
+### 6. AWS S3 설정
 
 1. AWS S3 버킷 생성
 2. IAM 사용자 생성 및 S3 접근 권한 부여
 3. Access Key ID와 Secret Access Key 생성
 4. 버킷 CORS 설정 (필요시)
 
-### 6. 개발 서버 실행
+### 7. 개발 서버 실행
 ```bash
 npm run dev
 ```
 
-### 7. 배포
+### 8. 배포
 ```bash
 npm run deploy
 ```
@@ -118,7 +124,8 @@ Content-Type: application/json
 {
   "imageUrl": "https://s3.amazonaws.com/bucket/image.jpg",
   "filename": "image.jpg",
-  "enhancementLevel": "auto"
+  "enhancementLevel": "auto",
+  "email": "user@example.com"
 }
 ```
 
@@ -126,9 +133,10 @@ Content-Type: application/json
 
 1. **이미지 업로드**: 드래그 앤 드롭 또는 클릭하여 이미지 선택
 2. **보정 강도 선택**: 자동, 약함, 보통, 강함 중 선택
-3. **보정 시작**: "이미지 보정 시작" 버튼 클릭
-4. **결과 확인**: 원본과 보정된 이미지 비교
-5. **다운로드**: 보정된 이미지 다운로드
+3. **이메일 입력**: 선택사항 (처리 결과 추적용)
+4. **보정 시작**: "이미지 보정 시작" 버튼 클릭
+5. **결과 확인**: 원본과 보정된 이미지 비교
+6. **Notion 저장**: 모든 처리 기록이 자동으로 Notion DB에 저장
 
 ## 🔒 보안 및 개인정보
 
