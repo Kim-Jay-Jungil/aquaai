@@ -2,7 +2,7 @@
   "name": "aquaai",
   "private": true,
   "type": "module",
-  "engines": { "node": "22.x" },
+  "engines": { "node": "18.x" },
   "scripts": {
     "build": "echo 'Build completed'",
     "dev": "vercel dev",
