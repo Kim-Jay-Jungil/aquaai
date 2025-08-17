@@ -4,9 +4,12 @@
   "trailingSlash": false,
   "routes": [
     { "src": "^/api/.*", "dest": "/$0" },
+
     { "src": "^/signin$", "dest": "/signin.html" },
     { "src": "^/signup$", "dest": "/signup.html" },
+
     { "src": "^/upload$", "dest": "/upload/index.html" },
+
     { "src": "^/$", "dest": "/index.html" },
     { "src": "^(?!/api/).*$", "dest": "/index.html" }
   ]

@@ -1,14 +1,10 @@
-import { logSubmissionToNotion } from "./_lib/notion.js";
+// api/_lib/notion.js
+import { Client } from '@notionhq/client';
 
-export default async function handler(req, res) {
-  try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
-    }
-    const data = req.body || {};
-    const page = await logSubmissionToNotion(data);
-    return res.status(200).json({ ok: true, id: page.id });
-  } catch (e) {
-    return res.status(500).json({ error: e.message || "notion log failed" });
-  }
+const token = process.env.NOTION_TOKEN;
+const db = process.env.NOTION_DATABASE_ID;
+
+export function notion() {
+  if (!token || !db) throw new Error('Notion env missing');
+  return { client: new Client({ auth: token }), dbId: db };
 }

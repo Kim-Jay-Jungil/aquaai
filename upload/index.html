@@ -2,46 +2,32 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>aqua.ai — 업로드</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>업로드 — aqua.ai</title>
+  <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <main class="container">
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/">aqua.ai</a>
+    </div>
+  </header>
+
+  <main class="wrap">
     <h1>업로드</h1>
 
-    <form id="uform">
+    <div class="card">
       <div class="row">
-        <label class="label">이메일 (선택)</label>
-        <input type="email" id="email" placeholder="you@example.com" />
+        <input id="file" type="file" accept="image/*" />
+        <button id="btn" class="btn">업로드</button>
       </div>
+      <div id="msg" class="msg"></div>
+      <div class="progress"><div class="bar" id="bar"></div></div>
+    </div>
 
-      <div class="row">
-        <label class="label">모델</label>
-        <label><input type="checkbox" name="model" value="color" checked /> Color</label>
-        <label><input type="checkbox" name="model" value="dehaze" checked /> Dehaze</label>
-        <label><input type="checkbox" name="model" value="stabilize" /> Stabilize</label>
-        <label><input type="checkbox" name="model" value="superres" /> Super-Res</label>
-      </div>
-
-      <div class="row">
-        <label class="label">옵션</label>
-        <label><input type="checkbox" id="consent_gallery" /> 갤러리 공개 동의</label>
-        <label><input type="checkbox" id="consent_training" /> 모델 학습 동의</label>
-        <label><input type="checkbox" id="watermark" checked /> 워터마크</label>
-      </div>
-
-      <div class="row">
-        <input type="file" id="file" accept="image/*" />
-      </div>
-
-      <button type="submit" class="btn">업로드</button>
-
-      <progress id="bar" max="100" value="0" style="width:100%; margin-top:16px;"></progress>
-      <pre id="msg" class="mono"></pre>
-    </form>
+    <p class="muted">© aqua.ai</p>
   </main>
 
-  <script src="/upload/app.js" type="module"></script>
+  <script src="/upload/app.js"></script>
 </body>
 </html>

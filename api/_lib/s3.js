@@ -1,49 +1,57 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import crypto from "crypto";
+// api/_lib/s3.js
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import crypto from 'crypto';
 
 const region = process.env.AWS_REGION;
 const bucket = process.env.S3_BUCKET;
+const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
-if (!region) console.error("[S3] AWS_REGION is missing");
-if (!bucket) console.error("[S3] S3_BUCKET is missing");
+// CloudFront 등 CDN이 있다면 넣고, 없으면 S3 정적 URL을 씁니다.
+const CDN_BASE =
+  process.env.CDN_BASE || (region && bucket
+    ? `https://${bucket}.s3.${region}.amazonaws.com`
+    : '');
 
-// Vercel 환경변수에 키가 없으면 presign 자체가 불가합니다.
-const hasCreds = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
-if (!hasCreds) console.error("[S3] AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY missing");
+const PREFIX = (process.env.S3_PREFIX || 'uploads').replace(/^\/+|\/+$/g, '');
 
-const s3 = new S3Client({ region });
+let _s3;
+function s3() {
+  if (!_s3) {
+    if (!region || !bucket || !accessKeyId || !secretAccessKey) {
+      throw new Error('S3 env missing (AWS_REGION, S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)');
+    }
+    _s3 = new S3Client({
+      region,
+      credentials: { accessKeyId, secretAccessKey }
+    });
+  }
+  return _s3;
+}
 
-export async function getPresignedPut({ filename, contentType }) {
-  if (!region) throw new Error("AWS_REGION missing");
-  if (!bucket) throw new Error("S3_BUCKET missing");
-  if (!hasCreds) throw new Error("AWS credentials missing");
+export function buildKey(filename) {
+  const safe = String(filename || 'file')
+    .toLowerCase()
+    .replace(/[^a-z0-9.\-_]+/g, '-');
 
-  const prefix = (process.env.S3_PREFIX || "uploads").replace(/^\/|\/$/g, "");
   const now = new Date();
-  const y = now.getUTCFullYear();
-  const m = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(now.getUTCDate()).padStart(2, "0");
-  const id = crypto.randomUUID();
-  const safe = (filename || "file").replace(/[^\w.\-]+/g, "_");
+  const yyyy = String(now.getUTCFullYear());
+  const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(now.getUTCDate()).padStart(2, '0');
+  const id = crypto.randomUUID().slice(0, 8);
 
-  const key = `${prefix}/${y}/${m}/${d}/${id}-${safe}`;
+  return `${PREFIX}/${yyyy}/${mm}/${dd}/${id}-${safe}`;
+}
 
-  // ⚠️ ACL 헤더를 서명에 포함하면 클라이언트 PUT 시 동일 헤더를 보내야 합니다.
-  // 버킷이 "Bucket owner enforced"인 경우 ACL 자체가 금지라 400 납니다.
-  // → PutObjectCommand에서 ACL을 빼고 기본(소유자) 권한을 사용합니다.
+export async function presignPut(filename, contentType) {
+  const key = buildKey(filename);
   const cmd = new PutObjectCommand({
     Bucket: bucket,
     Key: key,
-    ContentType: contentType || "application/octet-stream"
+    ContentType: contentType || 'application/octet-stream'
   });
-
-  const url = await getSignedUrl(s3, cmd, { expiresIn: 60 }); // 60s 유효
-
-  const cdn = process.env.CDN_BASE?.replace(/\/+$/, "");
-  const publicUrl = cdn
-    ? `${cdn}/${key}`
-    : `https://${bucket}.s3.${region}.amazonaws.com/${encodeURIComponent(key)}`;
-
-  return { url, key, publicUrl };
+  const url = await getSignedUrl(s3(), cmd, { expiresIn: 300 });
+  const publicUrl = `${CDN_BASE}/${key}`;
+  return { key, url, publicUrl };
 }
