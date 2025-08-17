@@ -363,4 +363,121 @@
     }
   });
 
+  // API 테스트 함수들 (전역으로 노출)
+  window.testAPI = async function() {
+    const resultDiv = document.getElementById('apiTestResult');
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#fff3cd';
+    resultDiv.style.color = '#856404';
+    resultDiv.textContent = '헬스체크 API 테스트 중...';
+
+    try {
+      const response = await fetch('/api/health');
+      const contentType = response.headers.get('content-type');
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        resultDiv.style.background = '#d4edda';
+        resultDiv.style.color = '#155724';
+        resultDiv.textContent = `✅ 헬스체크 성공!\n\n상태: ${data.status}\n메시지: ${data.message}\n시간: ${data.timestamp}\n환경: ${data.environment}`;
+      } else {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ 헬스체크 실패\n상태: ${response.status}\n오류: ${JSON.stringify(data, null, 2)}`;
+      }
+    } catch (error) {
+      resultDiv.style.background = '#f8d7da';
+      resultDiv.style.color = '#721c24';
+      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+    }
+  };
+
+  window.testPresign = async function() {
+    const resultDiv = document.getElementById('apiTestResult');
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#fff3cd';
+    resultDiv.style.color = '#856404';
+    resultDiv.textContent = 'Presign API 테스트 중...';
+
+    try {
+      const response = await fetch('/api/presign-put', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          filename: 'test-image.jpg',
+          contentType: 'image/jpeg'
+        })
+      });
+
+      const contentType = response.headers.get('content-type');
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (response.ok && data.ok) {
+        resultDiv.style.background = '#d4edda';
+        resultDiv.style.color = '#155724';
+        resultDiv.textContent = `✅ Presign API 성공!\n\nURL: ${data.url ? '생성됨' : '누락'}\nKey: ${data.key || 'N/A'}\nPublic URL: ${data.publicUrl || 'N/A'}\n메시지: ${data.message || 'N/A'}`;
+      } else {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ Presign API 실패\n상태: ${response.status}\n오류: ${data.error || 'Unknown'}\n상세: ${data.detail || 'N/A'}\n메시지: ${data.message || 'N/A'}`;
+      }
+    } catch (error) {
+      resultDiv.style.background = '#f8d7da';
+      resultDiv.style.color = '#721c24';
+      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+    }
+  };
+
+  window.checkEnvironment = async function() {
+    const resultDiv = document.getElementById('apiTestResult');
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#fff3cd';
+    resultDiv.style.color = '#856404';
+    resultDiv.textContent = '환경 변수 확인 중...';
+
+    try {
+      const response = await fetch('/api/debug-env');
+      const contentType = response.headers.get('content-type');
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        resultDiv.style.background = '#d4edda';
+        resultDiv.style.color = '#155724';
+        resultDiv.textContent = `✅ 환경 변수 확인 성공!\n\n${Object.entries(data.environment).map(([key, value]) => `${key}: ${value}`).join('\n')}\n\nAWS SDK: ${data.awsTest}`;
+      } else {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ 환경 변수 확인 실패\n${data.error}`;
+      }
+    } catch (error) {
+      resultDiv.style.background = '#f8d7da';
+      resultDiv.style.color = '#721c24';
+      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+    }
+  };
+
 })();
