@@ -12,11 +12,6 @@
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/", "dest": "/index.html" }
   ],
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs22.x"
-    }
-  },
   "env": {
     "AWS_REGION": "@aws-region",
     "S3_BUCKET": "@s3-bucket",
