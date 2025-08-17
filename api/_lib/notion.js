@@ -1,135 +1,55 @@
-// api/_lib/notion.js
 import { Client } from "@notionhq/client";
 
-const notion = process.env.NOTION_API_KEY
-  ? new Client({ auth: process.env.NOTION_API_KEY })
-  : null;
+const notion = new Client({ auth: process.env.NOTION_TOKEN });
+const DB = process.env.NOTION_DB_ID;
 
-const dbCache = new Map();
+export async function logSubmissionToNotion(payload) {
+  if (!DB) throw new Error("NOTION_DB_ID missing");
 
-/** DB 스키마(프로퍼티 타입) 조회 & 캐시 */
-export async function loadDbSchema(databaseId) {
-  if (!notion || !databaseId) return null;
-  if (dbCache.has(databaseId)) return dbCache.get(databaseId);
-  const db = await notion.databases.retrieve({ database_id: databaseId });
-  const props = db.properties || {};
-  dbCache.set(databaseId, props);
-  return props;
-}
+  const {
+    filename,
+    email,
+    models = [],
+    watermark = true,
+    consent_training = false,
+    consent_gallery = false,
+    original_url,
+    output_url,
+    notes
+  } = payload;
 
-/** 타입 안전하게 속성 넣기 (DB에 있을 때만) */
-function buildProp(schema, name, builder) {
-  const def = schema?.[name];
-  if (!def) return null;
-  try {
-    return builder(def.type);
-  } catch {
-    return null;
+  // 사용 중인 Submissions DB의 속성 이름과 타입에 맞춰 구성합니다.
+  const properties = {
+    Name: { title: [{ text: { content: filename || "Untitled" } }] },
+    created_at: { date: { start: new Date().toISOString() } },
+    status: { select: { name: "uploaded" } }
+  };
+
+  if (email) properties.user_email = { email };
+  if (Array.isArray(models) && models.length) {
+    properties.models = { multi_select: models.map((n) => ({ name: n })) };
   }
-}
+  properties.watermark = { checkbox: !!watermark };
+  properties.consent_training = { checkbox: !!consent_training };
+  properties.consent_gallery = { checkbox: !!consent_gallery };
 
-/** 업로드 레코드 생성 */
-export async function createUploadPage({
-  databaseId,
-  filename,
-  email,
-  plan,
-  url,
-  key,
-  size,
-  contentType,
-}) {
-  if (!notion || !databaseId) return { ok: false, skipped: true };
+  // Notion의 files 타입은 external URL 지원
+  if (original_url) {
+    properties.original_links = {
+      files: [{ name: filename || "original", external: { url: original_url } }]
+    };
+  }
+  if (output_url) {
+    properties.output_links = {
+      rich_text: [{ text: { content: output_url }, href: output_url }]
+    };
+  }
+  if (notes) {
+    properties.notes = { rich_text: [{ text: { content: notes } }] };
+  }
 
-  const schema = await loadDbSchema(databaseId);
-  if (!schema) return { ok: false, skipped: true };
-
-  const properties = {};
-
-  // Name (title)
-  const nameProp = buildProp(schema, "Name", () => ({
-    title: [{ type: "text", text: { content: filename || "Upload" } }],
-  }));
-  if (nameProp) properties["Name"] = nameProp;
-
-  // user_email
-  const emailProp = buildProp(schema, "user_email", (t) =>
-    t === "email"
-      ? { email }
-      : { rich_text: [{ type: "text", text: { content: email || "" } }] }
-  );
-  if (emailProp) properties["user_email"] = emailProp;
-
-  // created_at (date)
-  const createdProp = buildProp(schema, "created_at", (t) =>
-    t === "date"
-      ? { date: { start: new Date().toISOString() } }
-      : null
-  );
-  if (createdProp) properties["created_at"] = createdProp;
-
-  // plan
-  const planProp = buildProp(schema, "plan", (t) =>
-    t === "select"
-      ? { select: { name: (plan || "free").toLowerCase() } }
-      : { rich_text: [{ type: "text", text: { content: plan || "" } }] }
-  );
-  if (planProp) properties["plan"] = planProp;
-
-  // status
-  const statusProp = buildProp(schema, "status", (t) =>
-    t === "select" ? { select: { name: "uploaded" } } : null
-  );
-  if (statusProp) properties["status"] = statusProp;
-
-  // original_files (files)
-  const filesProp = buildProp(schema, "original_files", (t) =>
-    t === "files"
-      ? {
-          files: [
-            {
-              type: "external",
-              name: filename || "file",
-              external: { url },
-            },
-          ],
-        }
-      : null
-  );
-  if (filesProp) properties["original_files"] = filesProp;
-
-  // original_links
-  const linksProp = buildProp(schema, "original_links", (t) =>
-    t === "url"
-      ? { url }
-      : { rich_text: [{ type: "text", text: { content: url } }] }
-  );
-  if (linksProp) properties["original_links"] = linksProp;
-
-  // size_bytes
-  const sizeProp = buildProp(schema, "size_bytes", (t) =>
-    t === "number" ? { number: Number(size || 0) } : null
-  );
-  if (sizeProp) properties["size_bytes"] = sizeProp;
-
-  // content_type
-  const ctProp = buildProp(schema, "content_type", (t) =>
-    t === "select"
-      ? { select: { name: contentType || "" } }
-      : { rich_text: [{ type: "text", text: { content: contentType || "" } }] }
-  );
-  if (ctProp) properties["content_type"] = ctProp;
-
-  // s3_key
-  const keyProp = buildProp(schema, "s3_key", () => ({
-    rich_text: [{ type: "text", text: { content: key || "" } }],
-  }));
-  if (keyProp) properties["s3_key"] = keyProp;
-
-  const page = await notion.pages.create({
-    parent: { database_id: databaseId },
-    properties,
+  return await notion.pages.create({
+    parent: { database_id: DB },
+    properties
   });
-
-  return { ok: true, id: page.id };
 }
