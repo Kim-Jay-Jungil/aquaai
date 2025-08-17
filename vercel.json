@@ -1,13 +1,37 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/(.*)", "destination": "/$1" }
-  ],
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs20.x"
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
     }
-  },
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/debug.html",
+      "dest": "/debug.html"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    }
+  ],
   "env": {
     "AWS_REGION": "@aws-region",
     "S3_BUCKET": "@s3-bucket",

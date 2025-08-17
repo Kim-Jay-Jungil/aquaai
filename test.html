@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>테스트 페이지</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .test-btn {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            text-align: left;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Aqua.AI 테스트 페이지</h1>
+    <p>이 페이지가 열린다면 정적 파일 서빙이 정상입니다.</p>
+    
+    <button class="test-btn" onclick="testAPI()">API 테스트</button>
+    <button class="test-btn" onclick="testPresign()">Presign 테스트</button>
+    
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'API 테스트 중...';
+
+            try {
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+✅ API 테스트 성공!
+
+메시지: ${data.message}
+시간: ${data.timestamp}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ API 오류: ${response.status}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 네트워크 오류: ${error.message}`;
+            }
+        }
+
+        async function testPresign() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Presign API 테스트 중...';
+
+            try {
+                const response = await fetch('/api/presign-put', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: 'test.jpg',
+                        contentType: 'image/jpeg'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+✅ Presign API 테스트 성공!
+
+URL: ${data.url ? '생성됨' : '누락'}
+Key: ${data.key || 'N/A'}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+❌ Presign API 오류
+
+상태: ${response.status}
+오류: ${data.error || 'Unknown'}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 네트워크 오류: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
