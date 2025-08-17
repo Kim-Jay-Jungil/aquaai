@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 테스트 - Aqua.AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Aqua.AI API 테스트</h1>
+    
+    <div class="test-section">
+        <h3>1. 헬스체크 API</h3>
+        <p>기본 API 연결 상태를 확인합니다.</p>
+        <button onclick="testHealth()">헬스체크 테스트</button>
+        <div id="healthResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. S3 Presign API</h3>
+        <p>S3 업로드를 위한 presigned URL을 생성합니다.</p>
+        <button onclick="testPresign()">Presign API 테스트</button>
+        <div id="presignResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. 환경 변수 상태</h3>
+        <p>서버 환경 변수 설정 상태를 확인합니다.</p>
+        <button onclick="checkEnvironment()">환경 변수 확인</button>
+        <div id="envResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testHealth() {
+            const resultDiv = document.getElementById('healthResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '헬스체크 API 테스트 중...';
+
+            try {
+                const response = await fetch('/api/health');
+                const contentType = response.headers.get('content-type');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 헬스체크 성공!\n\n상태: ${data.status}\n메시지: ${data.message}\n시간: ${data.timestamp}\n환경: ${data.environment}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 헬스체크 실패\n상태: ${response.status}\n오류: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+            }
+        }
+
+        async function testPresign() {
+            const resultDiv = document.getElementById('presignResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Presign API 테스트 중...';
+
+            try {
+                const response = await fetch('/api/presign-put', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: 'test-image.jpg',
+                        contentType: 'image/jpeg'
+                    })
+                });
+
+                const contentType = response.headers.get('content-type');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (response.ok && data.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Presign API 성공!\n\nURL: ${data.url ? '생성됨' : '누락'}\nKey: ${data.key || 'N/A'}\nPublic URL: ${data.publicUrl || 'N/A'}\n메시지: ${data.message || 'N/A'}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Presign API 실패\n상태: ${response.status}\n오류: ${data.error || 'Unknown'}\n상세: ${data.detail || 'N/A'}\n메시지: ${data.message || 'N/A'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+            }
+        }
+
+        async function checkEnvironment() {
+            const resultDiv = document.getElementById('envResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '환경 변수 확인 중...';
+
+            try {
+                const response = await fetch('/api/debug-env');
+                const contentType = response.headers.get('content-type');
+                
+                if (!contentType || !contentType.includes('application/json')) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 환경 변수 확인 성공!\n\n${Object.entries(data.environment).map(([key, value]) => `${key}: ${value}`).join('\n')}\n\nAWS SDK: ${data.awsTest}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 환경 변수 확인 실패\n${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

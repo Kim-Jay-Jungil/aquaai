@@ -189,11 +189,20 @@
         })
       });
 
+      // 응답 타입 확인
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response:', contentType);
+        console.error('Response status:', response.status);
+        console.error('Response text:', await response.text());
+        throw new Error('서버에서 JSON 응답을 반환하지 않았습니다. API 엔드포인트를 확인하세요.');
+      }
+
       const data = await response.json();
       
       if (!response.ok) {
         console.error('Presign API error:', data);
-        throw new Error(data.error || data.detail || 'Upload failed');
+        throw new Error(data.message || data.error || data.detail || 'Upload failed');
       }
 
       if (!data.url) {
@@ -218,7 +227,21 @@
       
     } catch (error) {
       console.error('S3 upload error:', error);
-      throw new Error(`S3 업로드 실패: ${error.message}`);
+      
+      // 사용자 친화적인 에러 메시지
+      let userMessage = '파일 업로드에 실패했습니다.';
+      
+      if (error.message.includes('JSON 응답을 반환하지 않았습니다')) {
+        userMessage = '서버 설정 오류: API 엔드포인트가 올바르게 작동하지 않습니다.';
+      } else if (error.message.includes('환경 변수가 설정되지 않았습니다')) {
+        userMessage = '서버 설정 오류: S3 환경 변수가 설정되지 않았습니다.';
+      } else if (error.message.includes('S3 접근 권한 오류')) {
+        userMessage = 'AWS 설정 오류: S3 접근 권한을 확인하세요.';
+      } else if (error.message.includes('network')) {
+        userMessage = '네트워크 오류: 인터넷 연결을 확인하세요.';
+      }
+      
+      throw new Error(userMessage);
     }
   }
 

@@ -26,43 +26,80 @@ async function parseBody(req) {
 }
 
 export default async function handler(req, res) {
-  // 1) 메서드 체크
-  if (req.method !== 'POST') {
-    return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
+  // CORS 헤더 설정
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // OPTIONS 요청 처리 (preflight)
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
 
-  // 2) 환경변수 존재 여부(비밀은 마스킹하여 로그)
-  const envReport = {
-    AWS_REGION: !!process.env.AWS_REGION,
-    S3_BUCKET: !!process.env.S3_BUCKET,
-    AWS_ACCESS_KEY_ID: !!process.env.AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY: !!process.env.AWS_SECRET_ACCESS_KEY,
-    S3_PREFIX: !!process.env.S3_PREFIX,
-    CDN_BASE: !!process.env.CDN_BASE
-  };
+  if (req.method !== 'POST') {
+    return res.status(405).json({ 
+      ok: false, 
+      error: 'Method Not Allowed',
+      allowedMethods: ['POST']
+    });
+  }
 
   try {
-    // 3) 본문 파싱 & 필수값 검증
     const body = await parseBody(req);
     const filename = body.filename || req.query.filename || '';
     const contentType = body.contentType || req.query.contentType || '';
 
     if (!filename) {
-      console.warn('[presign] 400 filename required', { envReport, headers: req.headers });
-      return res.status(400).json({ ok: false, error: 'filename required' });
+      return res.status(400).json({ 
+        ok: false, 
+        error: 'filename required',
+        received: { filename, contentType }
+      });
     }
 
-    console.log('[presign] start', { filename, contentType, envReport });
+    console.log(`Presign request for: ${filename}, type: ${contentType}`);
 
-    // 4) Pre-sign 생성
     const { url, key, publicUrl } = await presignPut(filename, contentType);
-
-    console.log('[presign] ok', { key });
-    return res.status(200).json({ ok: true, url, key, publicUrl });
+    
+    console.log(`Presign successful: ${key}`);
+    
+    return res.status(200).json({ 
+      ok: true, 
+      url, 
+      key, 
+      publicUrl,
+      message: 'Presigned URL generated successfully'
+    });
+    
   } catch (e) {
-    // 5) 에러 로깅 + 클라이언트에 상세 메시지 전달
-    console.error('[presign] 500 error', e);
-    const safeDetail = (e && e.message) ? e.message : String(e);
-    return res.status(500).json({ ok: false, error: 'server', detail: safeDetail });
+    console.error('Presign error:', e);
+    
+    // 환경 변수 누락 체크
+    if (e.message.includes('Missing required environment variables')) {
+      return res.status(500).json({ 
+        ok: false, 
+        error: 'configuration_error',
+        detail: 'S3 configuration is missing. Please check environment variables.',
+        message: '서버 설정 오류: S3 환경 변수가 설정되지 않았습니다.'
+      });
+    }
+    
+    // S3 접근 오류
+    if (e.message.includes('AccessDenied') || e.message.includes('access denied')) {
+      return res.status(500).json({ 
+        ok: false, 
+        error: 'access_denied',
+        detail: 'S3 access denied. Check AWS credentials and permissions.',
+        message: 'S3 접근 권한 오류: AWS 자격 증명을 확인하세요.'
+      });
+    }
+    
+    // 기타 오류
+    return res.status(500).json({ 
+      ok: false, 
+      error: 'server_error',
+      detail: e.message,
+      message: '서버 오류가 발생했습니다.'
+    });
   }
 }
