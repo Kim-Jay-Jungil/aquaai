@@ -12,10 +12,17 @@
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ filename, contentType })
     });
-    let data = {};
-    try { data = await r.json(); } catch {}
-    if (!r.ok || !data?.url) throw new Error(data?.error || (`presign failed (${r.status})`));
-    return data; // {url, key, publicUrl}
+
+    let data = null;
+    try { data = await r.json(); } catch { data = null; }
+
+    if (!r.ok) {
+      const detail = data?.detail ? `, detail: ${data.detail}` : '';
+      const errMsg = data?.error ? `${data.error}${detail}` : `presign failed (${r.status})`;
+      throw new Error(errMsg);
+    }
+    if (!data?.url) throw new Error('presign ok but url missing');
+    return data; // { url, key, publicUrl }
   }
 
   async function putToS3(putUrl, file) {
@@ -40,7 +47,6 @@
       await putToS3(url, file);
 
       say(`완료! ${publicUrl}`);
-      // TODO: 필요하면 여기에 Notion 로깅 호출 추가 (/api/notion-log 등)
     } catch (e) {
       say(`오류: ${e.message || e}`);
     }
