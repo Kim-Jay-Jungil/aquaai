@@ -167,6 +167,8 @@
   // S3 업로드
   async function uploadToS3(file) {
     try {
+      console.log('Starting S3 upload for file:', file.name);
+      
       const response = await fetch('/api/presign-put', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -177,18 +179,49 @@
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Upload failed');
+      
+      if (!response.ok) {
+        console.error('Presign API error:', data);
+        throw new Error(data.error || data.detail || 'Upload failed');
+      }
+
+      if (!data.url) {
+        throw new Error('Invalid presign response: missing upload URL');
+      }
+
+      console.log('Presigned URL received, uploading to S3...');
 
       // S3에 직접 업로드
-      await fetch(data.url, {
+      const uploadResponse = await fetch(data.url, {
         method: 'PUT',
         headers: { 'content-type': file.type },
         body: file
       });
 
+      if (!uploadResponse.ok) {
+        throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+      }
+
+      console.log('File uploaded to S3 successfully');
       return data;
+      
     } catch (error) {
-      throw new Error(`S3 upload failed: ${error.message}`);
+      console.error('S3 upload error:', error);
+      
+      // 사용자 친화적인 에러 메시지
+      let userMessage = '파일 업로드에 실패했습니다.';
+      
+      if (error.message.includes('Environment variables not set')) {
+        userMessage = '서버 설정 오류: 관리자에게 문의하세요.';
+      } else if (error.message.includes('access denied')) {
+        userMessage = '접근 권한 오류: AWS 설정을 확인하세요.';
+      } else if (error.message.includes('bucket not found')) {
+        userMessage = '저장소 오류: S3 버킷 설정을 확인하세요.';
+      } else if (error.message.includes('network')) {
+        userMessage = '네트워크 오류: 인터넷 연결을 확인하세요.';
+      }
+      
+      throw new Error(userMessage);
     }
   }
 

@@ -12,5 +12,19 @@
 
     { "src": "^/$", "dest": "/index.html" },
     { "src": "^(?!/api/).*$", "dest": "/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "env": {
+    "AWS_REGION": "@aws-region",
+    "S3_BUCKET": "@s3-bucket",
+    "AWS_ACCESS_KEY_ID": "@aws-access-key-id",
+    "AWS_SECRET_ACCESS_KEY": "@aws-secret-access-key",
+    "NOTION_TOKEN": "@notion-token",
+    "NOTION_DB_ID": "@notion-db-id",
+    "S3_PREFIX": "uploads"
+  }
 }

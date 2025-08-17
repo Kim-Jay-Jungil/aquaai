@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aqua.AI - 디버깅 페이지</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0066cc;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #004499;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success { background: #28a745; color: white; }
+        .status.error { background: #dc3545; color: white; }
+        .status.warning { background: #ffc107; color: black; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Aqua.AI 디버깅 페이지</h1>
+        
+        <div class="test-section">
+            <h3>1. 환경 변수 상태 확인</h3>
+            <p>Vercel에 설정된 환경 변수들의 상태를 확인합니다.</p>
+            <button onclick="checkEnvironment()">환경 변수 확인</button>
+            <div id="envResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. S3 연결 테스트</h3>
+            <p>AWS S3 서비스와의 연결을 테스트합니다.</p>
+            <button onclick="testS3()">S3 연결 테스트</button>
+            <div id="s3Result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Presign API 테스트</h3>
+            <p>실제 presign API를 호출하여 테스트합니다.</p>
+            <button onclick="testPresign()">Presign API 테스트</button>
+            <div id="presignResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. 전체 진단</h3>
+            <p>모든 테스트를 순차적으로 실행합니다.</p>
+            <button onclick="runAllTests()">전체 진단 실행</button>
+            <div id="allTestsResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkEnvironment() {
+            const resultDiv = document.getElementById('envResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '환경 변수를 확인하는 중...';
+
+            try {
+                const response = await fetch('/api/debug-env');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+환경 변수 상태:
+${Object.entries(data.environment).map(([key, value]) => `${key}: ${value}`).join('\n')}
+
+AWS SDK 테스트: ${data.awsTest}
+
+Vercel 정보:
+- Region: ${data.vercel.region || 'N/A'}
+- URL: ${data.vercel.url || 'N/A'}
+- Git Commit: ${data.vercel.gitCommitSha || 'N/A'}
+
+타임스탬프: ${data.timestamp}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `오류: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `네트워크 오류: ${error.message}`;
+            }
+        }
+
+        async function testS3() {
+            const resultDiv = document.getElementById('s3Result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'S3 연결을 테스트하는 중...';
+
+            try {
+                const response = await fetch('/api/test-s3');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+S3 연결 테스트 결과:
+
+1. ListBuckets 테스트: ${data.tests.listBuckets}
+2. 버킷 접근 테스트: ${data.tests.bucketAccess}
+3. 권한 테스트: ${data.tests.permissions}
+
+설정 정보:
+- Region: ${data.config.region}
+- Bucket: ${data.config.bucket}
+- Access Key: ${data.config.accessKeyId}
+- Secret Key: ${data.config.secretAccessKey}
+
+타임스탬프: ${data.timestamp}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `S3 테스트 실패: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `네트워크 오류: ${error.message}`;
+            }
+        }
+
+        async function testPresign() {
+            const resultDiv = document.getElementById('presignResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = 'Presign API를 테스트하는 중...';
+
+            try {
+                const response = await fetch('/api/presign-put', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: 'test-image.jpg',
+                        contentType: 'image/jpeg'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+Presign API 테스트 성공! ✅
+
+응답 데이터:
+- URL: ${data.url ? '✅ 생성됨' : '❌ 누락'}
+- Key: ${data.key || 'N/A'}
+- Public URL: ${data.publicUrl || 'N/A'}
+
+이제 S3 업로드가 가능합니다!
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+Presign API 테스트 실패 ❌
+
+HTTP 상태: ${response.status}
+오류 메시지: ${data.error || 'Unknown error'}
+상세 정보: ${data.detail || 'No details'}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `네트워크 오류: ${error.message}`;
+            }
+        }
+
+        async function runAllTests() {
+            const resultDiv = document.getElementById('allTestsResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '전체 진단을 실행하는 중...\n\n';
+
+            try {
+                // 1. 환경 변수 확인
+                resultDiv.textContent += '1. 환경 변수 확인 중...\n';
+                const envResponse = await fetch('/api/debug-env');
+                const envData = await envResponse.json();
+                
+                if (envData.success) {
+                    resultDiv.textContent += '✅ 환경 변수 확인 완료\n';
+                } else {
+                    resultDiv.textContent += `❌ 환경 변수 오류: ${envData.error}\n`;
+                }
+
+                // 2. S3 연결 테스트
+                resultDiv.textContent += '\n2. S3 연결 테스트 중...\n';
+                const s3Response = await fetch('/api/test-s3');
+                const s3Data = await s3Response.json();
+                
+                if (s3Data.success) {
+                    resultDiv.textContent += '✅ S3 연결 테스트 완료\n';
+                } else {
+                    resultDiv.textContent += `❌ S3 연결 오류: ${s3Data.error}\n`;
+                }
+
+                // 3. Presign API 테스트
+                resultDiv.textContent += '\n3. Presign API 테스트 중...\n';
+                const presignResponse = await fetch('/api/presign-put', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: 'test-image.jpg',
+                        contentType: 'image/jpeg'
+                    })
+                });
+
+                const presignData = await presignResponse.json();
+                
+                if (presignResponse.ok && presignData.ok) {
+                    resultDiv.textContent += '✅ Presign API 테스트 완료\n';
+                } else {
+                    resultDiv.textContent += `❌ Presign API 오류: ${presignData.error}\n`;
+                }
+
+                // 결과 요약
+                resultDiv.textContent += '\n=== 진단 완료 ===\n';
+                resultDiv.textContent += `환경 변수: ${envData.success ? '✅' : '❌'}\n`;
+                resultDiv.textContent += `S3 연결: ${s3Data.success ? '✅' : '❌'}\n`;
+                resultDiv.textContent += `Presign API: ${presignResponse.ok && presignData.ok ? '✅' : '❌'}\n`;
+
+                if (envData.success && s3Data.success && presignResponse.ok && presignData.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent += '\n🎉 모든 테스트가 성공했습니다! 이미지 업로드가 정상적으로 작동할 것입니다.';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent += '\n⚠️ 일부 테스트가 실패했습니다. 위의 개별 테스트 결과를 확인하여 문제를 해결하세요.';
+                }
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent += `\n❌ 전체 진단 중 오류 발생: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
