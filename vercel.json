@@ -1,44 +1,21 @@
 {
   "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+
   "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.js",
-      "use": "@vercel/static"
-    }
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.css", "use": "@vercel/static" },
+    { "src": "*.js",  "use": "@vercel/static" }
   ],
+
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/debug.html",
-      "dest": "/debug.html"
-    },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    }
-  ],
-  "env": {
-    "AWS_REGION": "@aws-region",
-    "S3_BUCKET": "@s3-bucket",
-    "AWS_ACCESS_KEY_ID": "@aws-access-key-id",
-    "AWS_SECRET_ACCESS_KEY": "@aws-secret-access-key",
-    "NOTION_TOKEN": "@notion-token",
-    "NOTION_DB_ID": "@notion-db-id",
-    "S3_PREFIX": "uploads"
-  }
+    { "src": "^/api/(.*)",      "dest": "/api/$1" },
+    { "src": "^/debug\\.html$", "dest": "/debug.html" },
+    { "src": "^/upload(.*)$",   "dest": "/upload.html" },
+    { "src": "^/signin$",       "dest": "/signin.html" },
+    { "src": "^/signup$",       "dest": "/signup.html" },
+    { "src": "^/$",             "dest": "/index.html" }
+  ]
 }
