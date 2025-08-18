@@ -1,105 +1,50 @@
 // api/presign-put.js
-import { presignPut } from './_lib/s3.js';
+import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { s3Client, safeKey, publicBase, requireEnv } from './_lib/s3.js';
 
-function readRaw(req) {
-  return new Promise((resolve) => {
-    let data = '';
-    req.on('data', (d) => (data += d));
-    req.on('end', () => resolve(data || ''));
-  });
-}
-
-async function parseBody(req) {
-  const ct = String(req.headers['content-type'] || '').toLowerCase();
-  const raw = await readRaw(req);
-
-  if (!raw) return {};
-
+async function readJson(req) {
+  const ct = (req.headers['content-type'] || '').toLowerCase();
+  const chunks = [];
+  for await (const ch of req) chunks.push(ch);
+  const raw = Buffer.concat(chunks).toString('utf8') || '';
   if (ct.includes('application/json')) {
-    try { return JSON.parse(raw); } catch { return {}; }
+    try { return JSON.parse(raw || '{}'); } catch { return {}; }
   }
   if (ct.includes('application/x-www-form-urlencoded')) {
-    const p = new URLSearchParams(raw);
-    return Object.fromEntries(p.entries());
+    return Object.fromEntries(new URLSearchParams(raw));
   }
-  return {};
+  return { filename: req.query?.filename, contentType: req.query?.contentType };
 }
 
 export default async function handler(req, res) {
-  // CORS 헤더 설정
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // OPTIONS 요청 처리 (preflight)
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ 
-      ok: false, 
-      error: 'Method Not Allowed',
-      allowedMethods: ['POST']
-    });
-  }
-
   try {
-    const body = await parseBody(req);
-    const filename = body.filename || req.query.filename || '';
-    const contentType = body.contentType || req.query.contentType || '';
-
-    if (!filename) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: 'filename required',
-        received: { filename, contentType }
-      });
+    if (req.method !== 'POST') {
+      return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
     }
 
-    console.log(`Presign request for: ${filename}, type: ${contentType}`);
+    const body = await readJson(req);
+    const filename = body.filename;
+    const contentType = body.contentType || 'application/octet-stream';
+    if (!filename) return res.status(400).json({ ok: false, error: 'filename required' });
 
-    const { url, key, publicUrl } = await presignPut(filename, contentType);
-    
-    console.log(`Presign successful: ${key}`);
-    
-    return res.status(200).json({ 
-      ok: true, 
-      url, 
-      key, 
-      publicUrl,
-      message: 'Presigned URL generated successfully'
+    const bucket = requireEnv('S3_BUCKET');
+    const client = s3Client();
+
+    const Key = safeKey(filename);
+    const cmd = new PutObjectCommand({
+      Bucket: bucket,
+      Key,
+      ContentType: contentType
+      // ACL: 'public-read'  // 버킷 퍼블릭 차단이 켜져있으면 사용하지 마세요.
     });
-    
+
+    const putUrl = await getSignedUrl(client, cmd, { expiresIn: 600 });
+    const publicUrl = `${publicBase()}/${Key}`;
+
+    return res.status(200).json({ ok: true, putUrl, key: Key, publicUrl });
   } catch (e) {
-    console.error('Presign error:', e);
-    
-    // 환경 변수 누락 체크
-    if (e.message.includes('Missing required environment variables')) {
-      return res.status(500).json({ 
-        ok: false, 
-        error: 'configuration_error',
-        detail: 'S3 configuration is missing. Please check environment variables.',
-        message: '서버 설정 오류: S3 환경 변수가 설정되지 않았습니다.'
-      });
-    }
-    
-    // S3 접근 오류
-    if (e.message.includes('AccessDenied') || e.message.includes('access denied')) {
-      return res.status(500).json({ 
-        ok: false, 
-        error: 'access_denied',
-        detail: 'S3 access denied. Check AWS credentials and permissions.',
-        message: 'S3 접근 권한 오류: AWS 자격 증명을 확인하세요.'
-      });
-    }
-    
-    // 기타 오류
-    return res.status(500).json({ 
-      ok: false, 
-      error: 'server_error',
-      detail: e.message,
-      message: '서버 오류가 발생했습니다.'
-    });
+    console.error('[presign-put] error:', e);
+    return res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 }
