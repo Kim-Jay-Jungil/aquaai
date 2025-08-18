@@ -2,15 +2,15 @@
 export default async function handler(req, res) {
   try {
     const envStatus = {
-      NOTION_TOKEN: {
-        exists: Boolean(process.env.NOTION_TOKEN),
-        length: process.env.NOTION_TOKEN ? process.env.NOTION_TOKEN.length : 0,
-        startsWith: process.env.NOTION_TOKEN ? process.env.NOTION_TOKEN.substring(0, 10) + '...' : 'N/A'
+      NOTION_API_KEY: {
+        exists: Boolean(process.env.NOTION_API_KEY),
+        length: process.env.NOTION_API_KEY ? process.env.NOTION_API_KEY.length : 0,
+        startsWith: process.env.NOTION_API_KEY ? process.env.NOTION_API_KEY.substring(0, 10) + '...' : 'N/A'
       },
-      NOTION_DB_ID: {
-        exists: Boolean(process.env.NOTION_DB_ID),
-        value: process.env.NOTION_DB_ID || 'N/A',
-        length: process.env.NOTION_DB_ID ? process.env.NOTION_DB_ID.length : 0
+      NOTION_DB_SUBMISSIONS: {
+        exists: Boolean(process.env.NOTION_DB_SUBMISSIONS),
+        value: process.env.NOTION_DB_SUBMISSIONS || 'N/A',
+        length: process.env.NOTION_DB_SUBMISSIONS ? process.env.NOTION_DB_SUBMISSIONS.length : 0
       },
       NOTION_WORKSPACE_ID: {
         exists: Boolean(process.env.NOTION_WORKSPACE_ID),
@@ -22,8 +22,8 @@ export default async function handler(req, res) {
 
     // 필수 환경변수 검증
     const missingVars = [];
-    if (!process.env.NOTION_TOKEN) missingVars.push('NOTION_TOKEN');
-    if (!process.env.NOTION_DB_ID) missingVars.push('NOTION_DB_ID');
+    if (!process.env.NOTION_API_KEY) missingVars.push('NOTION_API_KEY');
+    if (!process.env.NOTION_DB_SUBMISSIONS) missingVars.push('NOTION_DB_SUBMISSIONS');
 
     if (missingVars.length > 0) {
       return res.status(400).json({

@@ -1,10 +1,10 @@
 import { Client } from "@notionhq/client";
 
-const notion = new Client({ auth: process.env.NOTION_TOKEN });
-const DB = process.env.NOTION_DB_ID;
+const notion = new Client({ auth: process.env.NOTION_API_KEY });
+const DB = process.env.NOTION_DB_SUBMISSIONS;
 
 export async function logSubmissionToNotion(payload) {
-  if (!DB) throw new Error("NOTION_DB_ID missing");
+  if (!DB) throw new Error("NOTION_DB_SUBMISSIONS missing");
 
   const {
     filename,
@@ -87,7 +87,7 @@ export async function logSubmissionToNotion(payload) {
 
 // 사용자별 월간 사용량 조회
 export async function getUserMonthlyUsage(email, year, month) {
-  if (!DB) throw new Error("NOTION_DB_ID missing");
+  if (!DB) throw new Error("NOTION_DB_SUBMISSIONS missing");
 
   const startDate = new Date(year, month - 1, 1).toISOString();
   const endDate = new Date(year, month, 0).toISOString();
@@ -142,7 +142,7 @@ export async function checkUserLimit(email, userTier = 'free') {
 
 // 통계 데이터 조회
 export async function getServiceStats() {
-  if (!DB) throw new Error("NOTION_DB_ID missing");
+  if (!DB) throw new Error("NOTION_DB_SUBMISSIONS missing");
 
   const now = new Date();
   const currentMonth = now.getMonth() + 1;

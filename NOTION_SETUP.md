@@ -81,18 +81,18 @@ Vercel → Project → Settings → Environment Variables:
 
 ```bash
 # 필수 환경변수
-NOTION_TOKEN=secret_...
-NOTION_DB_ID=...
+NOTION_API_KEY=secret_...
+NOTION_DB_SUBMISSIONS=...
 
 # 선택사항
 NOTION_WORKSPACE_ID=...
 ```
 
-### 4.2 Notion Token 가져오기
+### 4.2 Notion API Key 가져오기
 1. [Notion Integrations](https://www.notion.so/my-integrations) 페이지
 2. **Aqua.AI Integration** 클릭
 3. **Internal Integration Token** 복사
-4. `NOTION_TOKEN`에 설정
+4. `NOTION_API_KEY`에 설정
 
 ### 4.3 Database ID 가져오기
 1. Notion 데이터베이스 페이지 열기
@@ -100,7 +100,7 @@ NOTION_WORKSPACE_ID=...
    ```
    https://www.notion.so/workspace/DATABASE_ID?v=...
    ```
-3. `NOTION_DB_ID`에 설정
+3. `NOTION_DB_SUBMISSIONS`에 설정
 
 ## 🧪 5단계: 테스트 및 확인
 

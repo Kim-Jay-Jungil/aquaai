@@ -54,8 +54,8 @@ export default async function handler(req, res) {
       
       // 환경변수 상태 확인
       console.log('🔍 Notion 환경변수 상태:', {
-        NOTION_TOKEN: process.env.NOTION_TOKEN ? '설정됨' : '설정되지 않음',
-        NOTION_DB_ID: process.env.NOTION_DB_ID ? '설정됨' : '설정되지 않음',
+        NOTION_API_KEY: process.env.NOTION_API_KEY ? '설정됨' : '설정되지 않음',
+        NOTION_DB_SUBMISSIONS: process.env.NOTION_DB_SUBMISSIONS ? '설정됨' : '설정되지 않음',
         NOTION_WORKSPACE_ID: process.env.NOTION_WORKSPACE_ID ? '설정됨' : '설정되지 않음'
       });
       
@@ -100,10 +100,10 @@ export default async function handler(req, res) {
       });
       
       // 환경변수 관련 오류인지 확인
-      if (notionError.message.includes('NOTION_TOKEN') || notionError.message.includes('NOTION_DB_ID')) {
+      if (notionError.message.includes('NOTION_API_KEY') || notionError.message.includes('NOTION_DB_SUBMISSIONS')) {
         console.error('🚨 환경변수 문제 감지:', {
-          NOTION_TOKEN: process.env.NOTION_TOKEN ? '설정됨' : '설정되지 않음',
-          NOTION_DB_ID: process.env.NOTION_DB_ID ? '설정됨' : '설정되지 않음'
+          NOTION_API_KEY: process.env.NOTION_API_KEY ? '설정됨' : '설정되지 않음',
+          NOTION_DB_SUBMISSIONS: process.env.NOTION_DB_SUBMISSIONS ? '설정됨' : '설정되지 않음'
         });
       }
       
