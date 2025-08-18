@@ -170,13 +170,13 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
     } else {
       const fileList = selectedFiles.map(file => `
-        <div class="file-item">
+        <div class="file-preview-item">
+          <div class="file-preview-image">
+            <img src="${URL.createObjectURL(file)}" alt="${file.name}" class="preview-image">
+          </div>
           <div class="file-info">
             <span class="file-name">${file.name}</span>
             <span class="file-size">${formatFileSize(file.size)}</span>
-          </div>
-          <div class="file-preview">
-            <img src="${URL.createObjectURL(file)}" alt="${file.name}" class="preview-image">
           </div>
         </div>
       `).join('');
