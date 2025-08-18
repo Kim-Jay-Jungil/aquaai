@@ -17,5 +17,12 @@
   },
   "devDependencies": {
     "vercel": "^33.5.1"
+  },
+  "vercel": {
+    "functions": {
+      "api/**/*.js": {
+        "runtime": "nodejs18.x"
+      }
+    }
   }
 }

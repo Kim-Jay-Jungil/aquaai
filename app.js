@@ -364,6 +364,42 @@
   });
 
   // API 테스트 함수들 (전역으로 노출)
+  window.testSimpleAPI = async function() {
+    const resultDiv = document.getElementById('apiTestResult');
+    resultDiv.style.display = 'block';
+    resultDiv.style.background = '#fff3cd';
+    resultDiv.style.color = '#856404';
+    resultDiv.textContent = '간단한 API 테스트 중...';
+
+    try {
+      const response = await fetch('/api/test-simple');
+      const contentType = response.headers.get('content-type');
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        resultDiv.style.background = '#d4edda';
+        resultDiv.style.color = '#155724';
+        resultDiv.textContent = `✅ 간단한 API 성공!\n\n메시지: ${data.message}\n상태: ${data.status}\n시간: ${data.timestamp}\nURL: ${data.url}`;
+      } else {
+        resultDiv.style.background = '#f8d7da';
+        resultDiv.style.color = '#721c24';
+        resultDiv.textContent = `❌ 간단한 API 실패\n상태: ${response.status}\n오류: ${JSON.stringify(data, null, 2)}`;
+      }
+    } catch (error) {
+      resultDiv.style.background = '#f8d7da';
+      resultDiv.style.color = '#721c24';
+      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+    }
+  };
+
   window.testAPI = async function() {
     const resultDiv = document.getElementById('apiTestResult');
     resultDiv.style.display = 'block';
