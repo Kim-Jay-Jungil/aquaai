@@ -48,7 +48,8 @@ export async function presignPut(filename, contentType) {
   const cmd = new PutObjectCommand({
     Bucket: bucket,
     Key: key,
-    ContentType: contentType || 'application/octet-stream'
+    ContentType: contentType || 'application/octet-stream',
+    ACL: 'public-read'  // ACL 설정 추가
   });
   const url = await getSignedUrl(s3(), cmd, { expiresIn: 300 });
   const publicUrl = `${CDN_BASE}/${key}`;
