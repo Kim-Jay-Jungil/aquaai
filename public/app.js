@@ -257,10 +257,10 @@
         throw new Error('Invalid presign response: missing upload URL');
       }
 
-      console.log('🔗 Presigned URL 받음, 서버를 통한 업로드 중...');
+      console.log('🔗 Presigned URL 받음, S3에 직접 업로드 중...');
 
-      // 서버를 통한 프록시 업로드 (CORS 문제 해결)
-      console.log('🔗 프록시 업로드 시작...');
+      // S3에 직접 업로드 (CORS 문제 해결을 위한 헤더 최적화)
+      console.log('🔗 S3 업로드 시작...');
       
       // Content-Type 헤더 최적화
       let optimizedContentType = file.type;
@@ -273,46 +273,42 @@
       }
       
       console.log('📋 업로드 정보:', {
-        presignUrl: data.url,
-        method: 'POST',
-        contentType: optimizedContentType,
+        url: data.url,
+        method: 'PUT',
+        originalContentType: file.type,
+        optimizedContentType: optimizedContentType,
         fileSize: file.size,
         fileName: file.name,
         sanitizedName: safeFilename
       });
       
-      // 서버를 통한 업로드 (새로운 API 엔드포인트 사용)
-      const uploadResponse = await fetch('/api/upload-file', {
-        method: 'POST',
+      const uploadResponse = await fetch(data.url, {
+        method: 'PUT',
         headers: { 
-          'content-type': 'application/json'
+          'content-type': optimizedContentType
+          // x-amz-acl 헤더 제거 (CORS 문제 원인일 수 있음)
         },
-        body: JSON.stringify({
-          presignUrl: data.url,
-          filename: safeFilename,
-          contentType: optimizedContentType,
-          fileData: await fileToBase64(file)
-        })
+        body: file
       });
 
-      console.log('📤 프록시 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
-      console.log('📋 프록시 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
+      console.log('📤 S3 직접 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
+      console.log('📋 S3 직접 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('❌ 프록시 업로드 실패:', errorText);
-        console.error('❌ 프록시 응답 상태:', uploadResponse.status, uploadResponse.statusText);
-        console.error('❌ 프록시 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
+        console.error('❌ S3 직접 업로드 실패:', errorText);
+        console.error('❌ S3 직접 응답 상태:', uploadResponse.status, uploadResponse.statusText);
+        console.error('❌ S3 직접 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
         
         // 특정 오류 코드별 상세 메시지
-        let detailedError = `Proxy upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`;
+        let detailedError = `Direct S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`;
         
         if (uploadResponse.status === 403) {
-          detailedError = '프록시 접근 권한 오류: 서버 설정을 확인하세요.';
+          detailedError = 'S3 접근 권한 오류: 서버 설정을 확인하세요.';
         } else if (uploadResponse.status === 400) {
-          detailedError = '프록시 요청 오류: 파일 형식이나 크기를 확인하세요.';
+          detailedError = 'S3 요청 오류: 파일 형식이나 크기를 확인하세요.';
         } else if (uploadResponse.status === 500) {
-          detailedError = '프록시 서버 오류: 잠시 후 다시 시도하세요.';
+          detailedError = 'S3 서버 오류: 잠시 후 다시 시도하세요.';
         } else if (uploadResponse.status === 0) {
           detailedError = '네트워크 오류: 인터넷 연결을 확인하세요.';
         }
@@ -320,18 +316,13 @@
         throw new Error(detailedError);
       }
 
-      const uploadResult = await uploadResponse.json();
-      console.log('✅ 프록시 업로드 성공:', uploadResult);
-      
-      // 프록시 업로드 결과를 원래 presign 응답과 병합
-      const finalResult = {
-        ...data,
-        publicUrl: uploadResult.publicUrl || data.publicUrl,
-        proxyUploaded: true
+      const uploadResult = {
+        publicUrl: data.publicUrl || data.url, // Presign API에서 받은 publicUrl이 있으면 사용
+        proxyUploaded: false // 프록시 업로드가 아니므로 false
       };
       
-      console.log('📋 최종 결과:', finalResult);
-      return finalResult;
+      console.log('✅ S3 직접 업로드 성공:', uploadResult);
+      return uploadResult;
       
     } catch (error) {
       console.error('💥 S3 업로드 오류:', error);

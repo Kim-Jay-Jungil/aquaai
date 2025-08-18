@@ -35,6 +35,17 @@
           <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
             💡 <strong>디버깅 팁:</strong> 이미지 업로드 실패 시 브라우저 개발자 도구(F12)의 콘솔 탭을 열어 상세한 오류 로그를 확인하세요.
           </p>
+          
+          <!-- CORS 문제 해결 가이드 -->
+          <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 0.75rem; margin-bottom: 1rem;">
+            <h4 style="margin: 0 0 0.5rem 0; color: #856404;">🌐 S3 CORS 설정 문제 해결</h4>
+            <p style="margin: 0; font-size: 0.9rem; color: #856404;">
+              <strong>현재 문제:</strong> S3 직접 업로드 시 CORS 오류 발생<br>
+              <strong>해결 방법:</strong> AWS S3 버킷에 CORS 설정 추가 필요<br>
+              <strong>테스트:</strong> 아래 "🌐 S3 CORS 테스트" 버튼으로 CORS 설정 상태 확인
+            </p>
+          </div>
+          
           <button id="simpleApiBtn" class="btn btn-outline" style="margin-right: 10px;">간단 API 테스트</button>
           <button id="apiTestBtn" class="btn btn-outline" style="margin-right: 10px;">API 테스트</button>
           <button id="s3TestBtn" class="btn btn-outline" style="margin-right: 10px;">S3 테스트</button>
@@ -535,6 +546,62 @@
         }
       };
       
+      // S3 CORS 설정 테스트 기능 추가
+      const testS3CorsBtn = document.createElement('button');
+      testS3CorsBtn.textContent = '🌐 S3 CORS 테스트';
+      testS3CorsBtn.className = 'btn btn-outline';
+      testS3CorsBtn.style.marginTop = '10px';
+      testS3CorsBtn.style.marginLeft = '10px';
+      testS3CorsBtn.onclick = async function() {
+        try {
+          console.log('🔍 S3 CORS 설정 테스트 시작...');
+          
+          // 1. Presign API 호출
+          const presignResponse = await fetch('/api/presign-put', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              filename: 'cors-test.txt',
+              contentType: 'text/plain'
+            })
+          });
+          
+          if (!presignResponse.ok) {
+            throw new Error(`Presign API 실패: ${presignResponse.status}`);
+          }
+          
+          const presignData = await presignResponse.json();
+          console.log('✅ Presign API 성공:', presignData);
+          
+          // 2. 간단한 텍스트로 S3 업로드 테스트
+          const testContent = 'CORS Test Content - ' + new Date().toISOString();
+          const testBlob = new Blob([testContent], { type: 'text/plain' });
+          
+          console.log('🔗 S3 CORS 테스트 업로드 시작...');
+          
+          const corsTestResponse = await fetch(presignData.url, {
+            method: 'PUT',
+            headers: { 
+              'content-type': 'text/plain'
+            },
+            body: testBlob
+          });
+          
+          console.log('📤 S3 CORS 테스트 응답:', corsTestResponse.status, corsTestResponse.statusText);
+          
+          if (corsTestResponse.ok) {
+            alert('✅ S3 CORS 테스트 성공!\n\nS3 직접 업로드가 정상적으로 작동합니다.\n\nPresign API: 성공\nS3 업로드: 성공');
+          } else {
+            const errorText = await corsTestResponse.text();
+            alert(`❌ S3 CORS 테스트 실패!\n\n상태: ${corsTestResponse.status}\n오류: ${errorText}\n\n💡 S3 버킷의 CORS 설정을 확인하세요.`);
+          }
+          
+        } catch (error) {
+          console.error('💥 S3 CORS 테스트 오류:', error);
+          alert(`❌ S3 CORS 테스트 오류!\n\n오류: ${error.message}\n\n💡 브라우저 개발자 도구(F12)의 콘솔 탭에서 상세한 오류 로그를 확인하세요.`);
+        }
+      };
+      
       // API 테스트 섹션에 버튼들 추가
       const apiTestSection = document.querySelector('.api-test-section');
       if (apiTestSection) {
@@ -542,6 +609,7 @@
         apiTestSection.appendChild(testUploadBtn);
         apiTestSection.appendChild(testRealFileBtn);
         apiTestSection.appendChild(checkApiStatusBtn);
+        apiTestSection.appendChild(testS3CorsBtn);
       }
     });
   </script>
