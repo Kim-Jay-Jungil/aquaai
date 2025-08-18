@@ -98,6 +98,33 @@
         <div id="resultsGrid" class="results-grid">
           <!-- 결과 이미지들이 여기에 표시됩니다 -->
         </div>
+        
+        <!-- 이미지 비교 슬라이더 섹션 -->
+        <div id="comparisonSection" class="comparison-section hidden">
+          <h3>전/후 비교</h3>
+          <div class="comparison-container">
+            <div class="image-comparison-slider">
+              <div class="image-wrapper">
+                <img id="originalImage" src="" alt="원본 이미지" />
+                <img id="enhancedImage" src="" alt="향상된 이미지" />
+              </div>
+              <div class="slider-handle">
+                <div class="slider-line"></div>
+                <div class="slider-circle">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 5L16 12L8 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M16 5L24 12L16 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="slider-labels">
+                <span class="label-original">원본</span>
+                <span class="label-enhanced">향상됨</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="results-actions">
           <button id="downloadAllBtn" class="btn btn-secondary">전체 다운로드</button>
           <button id="shareBtn" class="btn btn-outline">공유하기</button>

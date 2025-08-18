@@ -428,6 +428,35 @@ document.addEventListener('DOMContentLoaded', function() {
     
     resultsContainer.innerHTML = html;
     resultsContainer.style.display = 'block';
+    
+    // 성공한 결과가 있으면 슬라이더 표시
+    if (successCount > 0) {
+      const firstSuccess = results.find(r => r.success);
+      if (firstSuccess) {
+        showComparisonSlider(firstSuccess.originalUrl, firstSuccess.enhancedUrl);
+      }
+    }
+  }
+  
+  // 이미지 비교 슬라이더 표시
+  function showComparisonSlider(originalUrl, enhancedUrl) {
+    const comparisonSection = document.getElementById('comparisonSection');
+    const originalImage = document.getElementById('originalImage');
+    const enhancedImage = document.getElementById('enhancedImage');
+    
+    if (!comparisonSection || !originalImage || !enhancedImage) return;
+    
+    // 이미지 소스 설정
+    originalImage.src = originalUrl;
+    enhancedImage.src = enhancedUrl;
+    
+    // 슬라이더 섹션 표시
+    comparisonSection.classList.remove('hidden');
+    
+    // 슬라이더 재초기화
+    setTimeout(() => {
+      initImageComparisonSlider();
+    }, 100);
   }
 
   // 오류 표시
@@ -608,6 +637,119 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
   }
 
+  // 이미지 비교 슬라이더 기능
+  function initImageComparisonSlider() {
+    const slider = document.querySelector('.image-comparison-slider');
+    if (!slider) return;
+    
+    const enhancedImage = document.getElementById('enhancedImage');
+    const sliderHandle = document.querySelector('.slider-handle');
+    const sliderCircle = document.querySelector('.slider-circle');
+    
+    let isDragging = false;
+    let startX, startLeft;
+    
+    // 마우스 이벤트
+    sliderCircle.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDrag);
+    
+    // 터치 이벤트 (모바일)
+    sliderCircle.addEventListener('touchstart', startDragTouch);
+    document.addEventListener('touchmove', dragTouch);
+    document.addEventListener('touchend', stopDrag);
+    
+    // 클릭 이벤트 (슬라이더 영역 클릭)
+    slider.addEventListener('click', handleSliderClick);
+    
+    function startDrag(e) {
+      isDragging = true;
+      startX = e.clientX;
+      startLeft = parseFloat(getComputedStyle(sliderHandle).left);
+      sliderCircle.style.cursor = 'grabbing';
+      e.preventDefault();
+    }
+    
+    function startDragTouch(e) {
+      isDragging = true;
+      startX = e.touches[0].clientX;
+      startLeft = parseFloat(getComputedStyle(sliderHandle).left);
+      e.preventDefault();
+    }
+    
+    function drag(e) {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      const newLeft = Math.max(0, Math.min(100, startLeft + (deltaX / slider.offsetWidth) * 100));
+      updateSliderPosition(newLeft);
+      e.preventDefault();
+    }
+    
+    function dragTouch(e) {
+      if (!isDragging) return;
+      const deltaX = e.touches[0].clientX - startX;
+      const newLeft = Math.max(0, Math.min(100, startLeft + (deltaX / slider.offsetWidth) * 100));
+      updateSliderPosition(newLeft);
+      e.preventDefault();
+    }
+    
+    function stopDrag() {
+      isDragging = false;
+      sliderCircle.style.cursor = 'ew-resize';
+    }
+    
+    function handleSliderClick(e) {
+      if (e.target === slider || e.target.classList.contains('image-wrapper')) {
+        const rect = slider.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const percentage = (clickX / rect.width) * 100;
+        updateSliderPosition(percentage);
+      }
+    }
+    
+    function updateSliderPosition(percentage) {
+      // 슬라이더 핸들 위치 업데이트
+      sliderHandle.style.left = percentage + '%';
+      
+      // 향상된 이미지 클립 패스 업데이트
+      enhancedImage.style.clipPath = `polygon(0 0, ${percentage}% 0, ${percentage}% 100%, 0 100%)`;
+      
+      // 슬라이더 라인 위치 업데이트
+      const sliderLine = document.querySelector('.slider-line');
+      if (sliderLine) {
+        sliderLine.style.left = percentage + '%';
+      }
+    }
+    
+    // 키보드 접근성
+    sliderCircle.addEventListener('keydown', (e) => {
+      let newPosition;
+      switch (e.key) {
+        case 'ArrowLeft':
+          newPosition = Math.max(0, parseFloat(getComputedStyle(sliderHandle).left) - 5);
+          updateSliderPosition(newPosition);
+          break;
+        case 'ArrowRight':
+          newPosition = Math.min(100, parseFloat(getComputedStyle(sliderHandle).left) + 5);
+          updateSliderPosition(newPosition);
+          break;
+        case 'Home':
+          updateSliderPosition(0);
+          break;
+        case 'End':
+          updateSliderPosition(100);
+          break;
+      }
+    });
+    
+    // 초기 위치 설정 (50%)
+    updateSliderPosition(50);
+  }
+  
+  // 슬라이더 초기화
+  initImageComparisonSlider();
+
   console.log('🎉 Aqua.AI 앱 로딩 완료 (수정된 버전)!');
   console.log('💡 이제 presign API를 사용하지 않고 직접 업로드만 사용합니다!');
+  console.log('🎨 이미지 비교 슬라이더가 추가되었습니다!');
 });
