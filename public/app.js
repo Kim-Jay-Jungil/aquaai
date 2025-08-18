@@ -205,41 +205,59 @@
     }
   }
 
-  // S3 업로드
+  // S3 업로드 함수
   async function uploadToS3(file) {
     try {
-      console.log('Starting S3 upload for file:', file.name);
+      console.log('📤 S3 업로드 시작:', file.name, file.size, file.type);
       
+      // 파일 검증
+      const validation = validateFile(file);
+      if (!validation.isValid) {
+        throw new Error(`파일 검증 실패: ${validation.errors.join(', ')}`);
+      }
+      
+      // 안전한 파일명 사용
+      const safeFilename = validation.sanitizedName;
+      console.log('🔍 파일명 정리:', file.name, '→', safeFilename);
+      
+      console.log('🔍 파일 검증 통과, presign API 호출 중...');
+      
+      // Presign API 호출
       const response = await fetch('/api/presign-put', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ 
-          filename: file.name, 
+        body: JSON.stringify({
+          filename: safeFilename, 
           contentType: file.type 
         })
       });
 
+      console.log('📡 Presign API 응답:', response.status, response.statusText);
+
       // 응답 타입 확인
       const contentType = response.headers.get('content-type');
+      console.log('📋 Content-Type:', contentType);
+      
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('Non-JSON response:', contentType);
-        console.error('Response status:', response.status);
-        console.error('Response text:', await response.text());
+        const responseText = await response.text();
+        console.error('❌ Non-JSON 응답:', responseText);
         throw new Error('서버에서 JSON 응답을 반환하지 않았습니다. API 엔드포인트를 확인하세요.');
       }
 
       const data = await response.json();
+      console.log('✅ Presign API 응답 데이터:', data);
       
       if (!response.ok) {
-        console.error('Presign API error:', data);
+        console.error('❌ Presign API 오류:', data);
         throw new Error(data.message || data.error || data.detail || 'Upload failed');
       }
 
       if (!data.url) {
+        console.error('❌ Presign 응답에 URL 누락:', data);
         throw new Error('Invalid presign response: missing upload URL');
       }
 
-      console.log('Presigned URL received, uploading to S3...');
+      console.log('🔗 Presigned URL 받음, S3에 직접 업로드 중...');
 
       // S3에 직접 업로드
       console.log('🔗 S3 업로드 시작...');
@@ -298,7 +316,8 @@
         throw new Error(detailedError);
       }
 
-      console.log('File uploaded to S3 successfully');
+      console.log('✅ S3 업로드 성공');
+      console.log('📋 최종 결과:', data);
       return data;
       
     } catch (error) {
