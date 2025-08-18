@@ -32,6 +32,9 @@
         <div class="api-test-section" style="margin-bottom: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
           <h3>🔧 API 상태 확인</h3>
           <p>문제 진단을 위해 API 상태를 먼저 확인해보세요.</p>
+          <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+            💡 <strong>디버깅 팁:</strong> 이미지 업로드 실패 시 브라우저 개발자 도구(F12)의 콘솔 탭을 열어 상세한 오류 로그를 확인하세요.
+          </p>
           <button id="simpleApiBtn" class="btn btn-outline" style="margin-right: 10px;">간단 API 테스트</button>
           <button id="apiTestBtn" class="btn btn-outline" style="margin-right: 10px;">API 테스트</button>
           <button id="s3TestBtn" class="btn btn-outline" style="margin-right: 10px;">S3 테스트</button>
@@ -332,7 +335,30 @@
           if (response.ok) {
             const data = await response.json();
             console.log('✅ Presign API 성공:', data);
-            alert('Presign API 테스트 성공!\n\n' + JSON.stringify(data, null, 2));
+            
+            // 실제 S3 업로드 테스트
+            if (data.url) {
+              console.log('🔗 S3 업로드 테스트 시작...');
+              const uploadResponse = await fetch(data.url, {
+                method: 'PUT',
+                headers: { 
+                  'content-type': 'image/jpeg',
+                  'x-amz-acl': 'public-read'
+                },
+                body: testFile
+              });
+              
+              console.log('📤 S3 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
+              
+              if (uploadResponse.ok) {
+                alert('✅ 전체 업로드 테스트 성공!\n\nPresign API: 성공\nS3 업로드: 성공');
+              } else {
+                const errorText = await uploadResponse.text();
+                alert('❌ S3 업로드 실패!\n\nPresign API: 성공\nS3 업로드: 실패\n\n상태: ' + uploadResponse.status + '\n오류: ' + errorText);
+              }
+            } else {
+              alert('Presign API 성공했지만 URL이 없습니다:\n\n' + JSON.stringify(data, null, 2));
+            }
           } else {
             const errorData = await response.json();
             console.error('❌ Presign API 실패:', errorData);
@@ -345,11 +371,70 @@
         }
       };
       
+      // 실제 파일로 업로드 테스트하는 기능 추가
+      const testRealFileBtn = document.createElement('button');
+      testRealFileBtn.textContent = '📁 실제 파일 테스트';
+      testRealFileBtn.className = 'btn btn-outline';
+      testRealFileBtn.style.marginTop = '10px';
+      testRealFileBtn.style.marginLeft = '10px';
+      testRealFileBtn.onclick = function() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            console.log('📁 선택된 파일:', file);
+            
+            try {
+              // Presign API 호출
+              const response = await fetch('/api/presign-put', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                  filename: file.name,
+                  contentType: file.type
+                })
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Presign API 성공:', data);
+                
+                // S3 업로드
+                const uploadResponse = await fetch(data.url, {
+                  method: 'PUT',
+                  headers: { 
+                    'content-type': file.type,
+                    'x-amz-acl': 'public-read'
+                  },
+                  body: file
+                });
+                
+                if (uploadResponse.ok) {
+                  alert(`✅ 파일 업로드 성공!\n\n파일: ${file.name}\n크기: ${(file.size / 1024).toFixed(2)}KB\n타입: ${file.type}`);
+                } else {
+                  const errorText = await uploadResponse.text();
+                  alert(`❌ S3 업로드 실패!\n\n파일: ${file.name}\n상태: ${uploadResponse.status}\n오류: ${errorText}`);
+                }
+              } else {
+                const errorData = await response.json();
+                alert(`❌ Presign API 실패!\n\n파일: ${file.name}\n오류: ${JSON.stringify(errorData, null, 2)}`);
+              }
+            } catch (error) {
+              alert(`❌ 업로드 테스트 오류!\n\n파일: ${file.name}\n오류: ${error.message}`);
+            }
+          }
+        };
+        input.click();
+      };
+      
       // API 테스트 섹션에 버튼들 추가
       const apiTestSection = document.querySelector('.api-test-section');
       if (apiTestSection) {
         apiTestSection.appendChild(testImageBtn);
         apiTestSection.appendChild(testUploadBtn);
+        apiTestSection.appendChild(testRealFileBtn);
       }
     });
   </script>

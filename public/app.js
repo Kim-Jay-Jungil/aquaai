@@ -302,7 +302,7 @@
       return data;
       
     } catch (error) {
-      console.error('S3 upload error:', error);
+      console.error('💥 S3 업로드 오류:', error);
       
       // 사용자 친화적인 에러 메시지
       let userMessage = '파일 업로드에 실패했습니다.';
@@ -315,6 +315,23 @@
         userMessage = 'AWS 설정 오류: S3 접근 권한을 확인하세요.';
       } else if (error.message.includes('network')) {
         userMessage = '네트워크 오류: 인터넷 연결을 확인하세요.';
+      } else if (error.message.includes('파일 크기가 10MB를 초과합니다')) {
+        userMessage = '파일 크기 오류: 10MB 이하의 파일만 업로드 가능합니다.';
+      } else if (error.message.includes('이미지 파일만 업로드 가능합니다')) {
+        userMessage = '파일 타입 오류: 이미지 파일만 업로드 가능합니다.';
+      } else if (error.message.includes('파일 검증 실패')) {
+        userMessage = error.message;
+      } else if (error.message.includes('S3 접근 권한 오류')) {
+        userMessage = 'AWS S3 접근 권한 오류: AWS 설정을 확인하세요.';
+      } else if (error.message.includes('S3 요청 오류')) {
+        userMessage = 'S3 요청 오류: 파일 형식이나 크기를 확인하세요.';
+      } else if (error.message.includes('S3 서버 오류')) {
+        userMessage = 'S3 서버 오류: 잠시 후 다시 시도하세요.';
+      } else if (error.message.includes('네트워크 오류')) {
+        userMessage = '네트워크 오류: 인터넷 연결을 확인하세요.';
+      } else {
+        // 원본 오류 메시지를 포함
+        userMessage = `파일 업로드 실패: ${error.message}`;
       }
       
       throw new Error(userMessage);
