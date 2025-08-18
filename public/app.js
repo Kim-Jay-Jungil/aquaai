@@ -482,13 +482,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   async function testImageUrl() {
     try {
-      const response = await fetch('/api/presign-put', {
+      // 간단한 테스트 파일 생성
+      const testFile = new File(['test content'], 'test-image.jpg', { type: 'image/jpeg' });
+      const formData = new FormData();
+      formData.append('file', testFile);
+      
+      const response = await fetch('/api/upload-direct', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: 'test-image.jpg',
-          contentType: 'image/jpeg'
-        })
+        body: formData
       });
       const data = await response.json();
       showAPITestResult('이미지 URL 테스트', response.status, data);
