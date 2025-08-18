@@ -62,9 +62,14 @@
       errors.push(`파일 크기가 10MB를 초과합니다. (현재: ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     }
     
-    // 파일 타입 검증
-    if (!file.type.startsWith('image/')) {
-      errors.push(`이미지 파일만 업로드 가능합니다. (현재: ${file.type})`);
+    // 파일 타입 검증 (이미지 파일 + WebP 지원)
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+      'image/webp', 'image/bmp', 'image/tiff', 'image/heic'
+    ];
+    
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      errors.push(`지원하지 않는 파일 타입입니다. (현재: ${file.type})\n지원 형식: JPG, PNG, GIF, WebP, BMP, TIFF, HEIC`);
     }
     
     // 파일명 검증
@@ -77,10 +82,20 @@
       errors.push(`파일명에 사용할 수 없는 문자가 포함되어 있습니다.`);
     }
     
+    // 파일 확장자 검증
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'heic'];
+    
+    if (!extension || !allowedExtensions.includes(extension)) {
+      errors.push(`지원하지 않는 파일 확장자입니다. (현재: .${extension})\n지원 확장자: ${allowedExtensions.join(', ')}`);
+    }
+    
     return {
       isValid: errors.length === 0,
       errors: errors,
-      sanitizedName: sanitizeFilename(file.name)
+      sanitizedName: sanitizeFilename(file.name),
+      fileType: file.type,
+      extension: extension
     };
   }
 
@@ -346,21 +361,64 @@
       console.log('🔗 Presigned URL 받음, S3에 직접 업로드 중...');
 
       // S3에 직접 업로드
+      console.log('🔗 S3 업로드 시작...');
+      
+      // Content-Type 헤더 최적화
+      let optimizedContentType = file.type;
+      if (file.type === 'image/webp') {
+        optimizedContentType = 'image/webp';
+      } else if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+        optimizedContentType = 'image/jpeg';
+      } else if (file.type === 'image/png') {
+        optimizedContentType = 'image/png';
+      }
+      
+      console.log('📋 업로드 정보:', {
+        url: data.url,
+        method: 'PUT',
+        originalContentType: file.type,
+        optimizedContentType: optimizedContentType,
+        fileSize: file.size,
+        fileName: file.name,
+        sanitizedName: safeFilename
+      });
+      
       const uploadResponse = await fetch(data.url, {
         method: 'PUT',
-        headers: { 'content-type': file.type },
+        headers: { 
+          'content-type': optimizedContentType,
+          'x-amz-acl': 'public-read' // 공개 읽기 권한 추가
+        },
         body: file
       });
 
       console.log('📤 S3 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
+      console.log('📋 S3 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
         console.error('❌ S3 업로드 실패:', errorText);
-        throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+        console.error('❌ S3 응답 상태:', uploadResponse.status, uploadResponse.statusText);
+        console.error('❌ S3 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
+        
+        // 특정 오류 코드별 상세 메시지
+        let detailedError = `S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`;
+        
+        if (uploadResponse.status === 403) {
+          detailedError = 'S3 접근 권한 오류: AWS 설정을 확인하세요.';
+        } else if (uploadResponse.status === 400) {
+          detailedError = 'S3 요청 오류: 파일 형식이나 크기를 확인하세요.';
+        } else if (uploadResponse.status === 500) {
+          detailedError = 'S3 서버 오류: 잠시 후 다시 시도하세요.';
+        } else if (uploadResponse.status === 0) {
+          detailedError = '네트워크 오류: 인터넷 연결을 확인하세요.';
+        }
+        
+        throw new Error(detailedError);
       }
 
       console.log('✅ S3 업로드 성공');
+      console.log('📋 최종 결과:', data);
       return data;
       
     } catch (error) {
@@ -567,74 +625,4 @@
         showApiResult(`❌ API 테스트 실패\n상태: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
       }
     } catch (error) {
-      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
-    }
-  }
-
-  async function testAPI() {
-    showApiResult('API 테스트 중...', 'info');
-    
-    try {
-      const response = await fetch('/api/health');
-      const data = await response.json();
-      
-      if (response.ok) {
-        showApiResult(`✅ API 테스트 성공!\n\n상태: ${data.status}\n메시지: ${data.message}\n시간: ${data.timestamp}\n환경: ${data.environment}`, 'success');
-      } else {
-        showApiResult(`❌ API 테스트 실패\n상태: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
-      }
-    } catch (error) {
-      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
-    }
-  }
-
-  async function testPresign() {
-    showApiResult('S3 Presign API 테스트 중...', 'info');
-    
-    try {
-      const response = await fetch('/api/presign-put', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          filename: 'test-image.jpg',
-          contentType: 'image/jpeg'
-        })
-      });
-
-      const data = await response.json();
-      
-      if (response.ok && data.ok) {
-        showApiResult(`✅ S3 Presign API 성공!\n\nURL: ${data.url ? '생성됨' : '누락'}\nKey: ${data.key || 'N/A'}\nPublic URL: ${data.publicUrl || 'N/A'}`, 'success');
-      } else {
-        showApiResult(`❌ S3 Presign API 실패\n상태: ${response.status}\n오류: ${data.error || 'Unknown'}`, 'error');
-      }
-    } catch (error) {
-      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
-    }
-  }
-
-  async function checkEnvironment() {
-    showApiResult('환경 변수 확인 중...', 'info');
-    
-    try {
-      const response = await fetch('/api/debug-env');
-      const data = await response.json();
-      
-      if (data.success) {
-        const envInfo = Object.entries(data.environment).map(([key, value]) => `${key}: ${value}`).join('\n');
-        showApiResult(`✅ 환경 변수 확인 성공!\n\n${envInfo}\n\nAWS SDK: ${data.awsTest}`, 'success');
-      } else {
-        showApiResult(`❌ 환경 변수 확인 실패\n${data.error}`, 'error');
-      }
-    } catch (error) {
-      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
-    }
-  }
-
-  function showApiResult(message, type) {
-    $apiTestResult.style.display = 'block';
-    $apiTestResult.textContent = message;
-    $apiTestResult.className = `api-result ${type}`;
-  }
-
-})();
+      showApiResult(`
