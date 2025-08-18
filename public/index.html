@@ -53,6 +53,7 @@
           <button id="notionConnBtn" class="btn btn-outline" style="margin-right: 10px;">Notion 연결</button>
           <button id="simpleNotionBtn" class="btn btn-outline" style="margin-right: 10px;">간단 Notion</button>
           <button id="basicTestBtn" class="btn btn-outline" style="margin-right: 10px;">기본 테스트</button>
+          <button id="echoTestBtn" class="btn btn-outline" style="margin-right: 10px;">Echo 테스트</button>
           <button id="notionEnvBtn" class="btn btn-outline" style="margin-right: 10px;">Notion 환경변수</button>
           <button id="envCheckBtn" class="btn btn-outline">환경변수 확인</button>
           
@@ -656,6 +657,82 @@
     });
   </script>
 
-  <script type="module" src="/app.js"></script>
+  <script src="/app.js"></script>
+  
+  <!-- 간단한 인라인 테스트 스크립트 -->
+  <script>
+    console.log('🔧 인라인 테스트 스크립트 로드됨');
+    
+    // DOM 로드 완료 후 간단한 테스트
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('📋 인라인 스크립트: DOM 로드 완료');
+      
+      // 기본 테스트 버튼 찾기
+      const basicTestBtn = document.getElementById('basicTestBtn');
+      if (basicTestBtn) {
+        console.log('✅ 인라인 스크립트: 기본 테스트 버튼 발견');
+        
+        // 인라인으로 이벤트 리스너 추가
+        basicTestBtn.addEventListener('click', async function() {
+          console.log('🧪 인라인 스크립트: 기본 테스트 버튼 클릭됨');
+          try {
+            const response = await fetch('/api/basic-test');
+            const data = await response.json();
+            console.log('📡 인라인 스크립트: 응답 데이터:', data);
+            alert(`기본 테스트 성공!\n상태: ${response.status}\n응답: ${JSON.stringify(data, null, 2)}`);
+          } catch (error) {
+            console.error('❌ 인라인 스크립트: 오류:', error);
+            alert(`기본 테스트 실패!\n오류: ${error.message}`);
+          }
+        });
+      } else {
+        console.error('❌ 인라인 스크립트: 기본 테스트 버튼을 찾을 수 없음');
+      }
+      
+      // 간단 Notion 버튼 찾기
+      const simpleNotionBtn = document.getElementById('simpleNotionBtn');
+      if (simpleNotionBtn) {
+        console.log('✅ 인라인 스크립트: 간단 Notion 버튼 발견');
+        
+        // 인라인으로 이벤트 리스너 추가
+        simpleNotionBtn.addEventListener('click', async function() {
+          console.log('🧪 인라인 스크립트: 간단 Notion 버튼 클릭됨');
+          try {
+            const response = await fetch('/api/simple-notion-test');
+            const data = await response.json();
+            console.log('📡 인라인 스크립트: 응답 데이터:', data);
+            alert(`간단 Notion 테스트 성공!\n상태: ${response.status}\n응답: ${JSON.stringify(data, null, 2)}`);
+          } catch (error) {
+            console.error('❌ 인라인 스크립트: 오류:', error);
+            alert(`간단 Notion 테스트 실패!\n오류: ${error.message}`);
+          }
+        });
+      } else {
+        console.error('❌ 인라인 스크립트: 간단 Notion 버튼을 찾을 수 없음');
+      }
+      
+      // Echo 테스트 버튼 찾기
+      const echoTestBtn = document.getElementById('echoTestBtn');
+      if (echoTestBtn) {
+        console.log('✅ 인라인 스크립트: Echo 테스트 버튼 발견');
+        
+        // 인라인으로 이벤트 리스너 추가
+        echoTestBtn.addEventListener('click', async function() {
+          console.log('🧪 인라인 스크립트: Echo 테스트 버튼 클릭됨');
+          try {
+            const response = await fetch('/api/echo');
+            const data = await response.json();
+            console.log('📡 인라인 스크립트: 응답 데이터:', data);
+            alert(`Echo 테스트 성공!\n상태: ${response.status}\n응답: ${JSON.stringify(data, null, 2)}`);
+          } catch (error) {
+            console.error('❌ 인라인 스크립트: 오류:', error);
+            alert(`Echo 테스트 실패!\n오류: ${error.message}`);
+          }
+        });
+      } else {
+        console.error('❌ 인라인 스크립트: Echo 테스트 버튼을 찾을 수 없음');
+      }
+    });
+  </script>
 </body>
 </html>

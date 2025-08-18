@@ -1,4 +1,6 @@
-// public/app-fixed.js - 완전히 새로운 버전 (presign 코드 완전 제거)
+// public/app.js - Aqua.AI 메인 애플리케이션
+console.log('📁 app.js 파일 로드됨');
+
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 Aqua.AI 앱 로딩 시작 (수정된 버전)...');
 
