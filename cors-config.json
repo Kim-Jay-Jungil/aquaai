@@ -1,0 +1,9 @@
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+    "AllowedOrigins": ["https://aquaai-one.vercel.app", "https://aquaai-six.vercel.app", "http://localhost:3000", "*"],
+    "ExposeHeaders": ["ETag", "x-amz-version-id", "x-amz-delete-marker", "x-amz-request-id"],
+    "MaxAgeSeconds": 3000
+  }
+]
