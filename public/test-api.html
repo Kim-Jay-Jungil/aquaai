@@ -45,25 +45,58 @@
     <div class="test-section">
         <h3>1. 헬스체크 API</h3>
         <p>기본 API 연결 상태를 확인합니다.</p>
-        <button onclick="testHealth()">헬스체크 테스트</button>
+        <button id="healthBtn">헬스체크 테스트</button>
         <div id="healthResult" class="result" style="display: none;"></div>
     </div>
 
     <div class="test-section">
         <h3>2. S3 Presign API</h3>
         <p>S3 업로드를 위한 presigned URL을 생성합니다.</p>
-        <button onclick="testPresign()">Presign API 테스트</button>
+        <button id="presignBtn">Presign API 테스트</button>
         <div id="presignResult" class="result" style="display: none;"></div>
     </div>
 
     <div class="test-section">
         <h3>3. 환경 변수 상태</h3>
         <p>서버 환경 변수 설정 상태를 확인합니다.</p>
-        <button onclick="checkEnvironment()">환경 변수 확인</button>
+        <button id="envBtn">환경 변수 확인</button>
         <div id="envResult" class="result" style="display: none;"></div>
     </div>
 
     <script>
+        // 페이지 로드 시 JavaScript가 작동하는지 확인
+        console.log('🚀 test-api.html 페이지 로드됨');
+        
+        // DOM 요소들이 제대로 로드되었는지 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 DOM 로드 완료');
+            
+            // 버튼 요소들 확인
+            const healthBtn = document.getElementById('healthBtn');
+            const presignBtn = document.getElementById('presignBtn');
+            const envBtn = document.getElementById('envBtn');
+            
+            console.log('🔘 헬스체크 버튼:', healthBtn);
+            console.log('🔘 Presign 버튼:', presignBtn);
+            console.log('🔘 환경변수 버튼:', envBtn);
+            
+            // 버튼에 이벤트 리스너 추가 (onclick 대신)
+            if (healthBtn) {
+                healthBtn.addEventListener('click', testHealth);
+                console.log('✅ 헬스체크 버튼 이벤트 리스너 추가됨');
+            }
+            
+            if (presignBtn) {
+                presignBtn.addEventListener('click', testPresign);
+                console.log('✅ Presign 버튼 이벤트 리스너 추가됨');
+            }
+            
+            if (envBtn) {
+                envBtn.addEventListener('click', checkEnvironment);
+                console.log('✅ 환경변수 버튼 이벤트 리스너 추가됨');
+            }
+        });
+
         async function testHealth() {
             const resultDiv = document.getElementById('healthResult');
             resultDiv.style.display = 'block';
