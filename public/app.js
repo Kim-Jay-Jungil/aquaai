@@ -257,10 +257,10 @@
         throw new Error('Invalid presign response: missing upload URL');
       }
 
-      console.log('🔗 Presigned URL 받음, S3에 직접 업로드 중...');
+      console.log('🔗 Presigned URL 받음, 서버를 통한 업로드 중...');
 
-      // S3에 직접 업로드
-      console.log('🔗 S3 업로드 시작...');
+      // 서버를 통한 프록시 업로드 (CORS 문제 해결)
+      console.log('🔗 프록시 업로드 시작...');
       
       // Content-Type 헤더 최적화
       let optimizedContentType = file.type;
@@ -273,42 +273,46 @@
       }
       
       console.log('📋 업로드 정보:', {
-        url: data.url,
-        method: 'PUT',
-        originalContentType: file.type,
-        optimizedContentType: optimizedContentType,
+        presignUrl: data.url,
+        method: 'POST',
+        contentType: optimizedContentType,
         fileSize: file.size,
         fileName: file.name,
         sanitizedName: safeFilename
       });
       
-      const uploadResponse = await fetch(data.url, {
-        method: 'PUT',
+      // 서버를 통한 업로드 (새로운 API 엔드포인트 사용)
+      const uploadResponse = await fetch('/api/upload-file', {
+        method: 'POST',
         headers: { 
-          'content-type': optimizedContentType,
-          'x-amz-acl': 'public-read' // 공개 읽기 권한 추가
+          'content-type': 'application/json'
         },
-        body: file
+        body: JSON.stringify({
+          presignUrl: data.url,
+          filename: safeFilename,
+          contentType: optimizedContentType,
+          fileData: await fileToBase64(file)
+        })
       });
 
-      console.log('📤 S3 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
-      console.log('📋 S3 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
+      console.log('📤 프록시 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
+      console.log('📋 프록시 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('❌ S3 업로드 실패:', errorText);
-        console.error('❌ S3 응답 상태:', uploadResponse.status, uploadResponse.statusText);
-        console.error('❌ S3 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
+        console.error('❌ 프록시 업로드 실패:', errorText);
+        console.error('❌ 프록시 응답 상태:', uploadResponse.status, uploadResponse.statusText);
+        console.error('❌ 프록시 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
         
         // 특정 오류 코드별 상세 메시지
-        let detailedError = `S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`;
+        let detailedError = `Proxy upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`;
         
         if (uploadResponse.status === 403) {
-          detailedError = 'S3 접근 권한 오류: AWS 설정을 확인하세요.';
+          detailedError = '프록시 접근 권한 오류: 서버 설정을 확인하세요.';
         } else if (uploadResponse.status === 400) {
-          detailedError = 'S3 요청 오류: 파일 형식이나 크기를 확인하세요.';
+          detailedError = '프록시 요청 오류: 파일 형식이나 크기를 확인하세요.';
         } else if (uploadResponse.status === 500) {
-          detailedError = 'S3 서버 오류: 잠시 후 다시 시도하세요.';
+          detailedError = '프록시 서버 오류: 잠시 후 다시 시도하세요.';
         } else if (uploadResponse.status === 0) {
           detailedError = '네트워크 오류: 인터넷 연결을 확인하세요.';
         }
@@ -316,9 +320,18 @@
         throw new Error(detailedError);
       }
 
-      console.log('✅ S3 업로드 성공');
-      console.log('📋 최종 결과:', data);
-      return data;
+      const uploadResult = await uploadResponse.json();
+      console.log('✅ 프록시 업로드 성공:', uploadResult);
+      
+      // 프록시 업로드 결과를 원래 presign 응답과 병합
+      const finalResult = {
+        ...data,
+        publicUrl: uploadResult.publicUrl || data.publicUrl,
+        proxyUploaded: true
+      };
+      
+      console.log('📋 최종 결과:', finalResult);
+      return finalResult;
       
     } catch (error) {
       console.error('💥 S3 업로드 오류:', error);
@@ -558,5 +571,21 @@
     $apiTestResult.textContent = message;
     $apiTestResult.className = `api-result ${type}`;
   }
+
+  // 파일을 Base64로 변환하는 함수
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        // data:image/jpeg;base64, 부분 제거
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  // 파일명 정리 함수
 
 })();
