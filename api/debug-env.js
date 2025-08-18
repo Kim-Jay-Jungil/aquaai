@@ -11,8 +11,8 @@ export default async function handler(req, res) {
       S3_BUCKET: process.env.S3_BUCKET ? '✅ Set' : '❌ Missing',
       AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID ? '✅ Set' : '❌ Missing',
       AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY ? '✅ Set' : '❌ Missing',
-      NOTION_TOKEN: process.env.NOTION_TOKEN ? '✅ Set' : '❌ Missing',
-      NOTION_DB_ID: process.env.NOTION_DB_ID ? '✅ Set' : '❌ Missing',
+      NOTION_API_KEY: process.env.NOTION_API_KEY ? '✅ Set' : '❌ Missing',
+      NOTION_DB_SUBMISSIONS: process.env.NOTION_DB_SUBMISSIONS ? '✅ Set' : '❌ Missing',
       S3_PREFIX: process.env.S3_PREFIX || 'uploads (default)',
       NODE_ENV: process.env.NODE_ENV || 'development'
     };

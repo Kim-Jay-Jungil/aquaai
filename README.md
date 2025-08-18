@@ -59,8 +59,8 @@ AWS_ACCESS_KEY_ID=your-access-key
 AWS_SECRET_ACCESS_KEY=your-secret-key
 
 # Notion 설정
-NOTION_TOKEN=your-notion-integration-token
-NOTION_DB_ID=your-database-id
+NOTION_API_KEY=your-notion-integration-token
+NOTION_DB_SUBMISSIONS=your-database-id
 
 # S3 파일 접두사
 S3_PREFIX=uploads
