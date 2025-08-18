@@ -444,19 +444,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const originalImage = document.getElementById('originalImage');
     const enhancedImage = document.getElementById('enhancedImage');
     
-    if (!comparisonSection || !originalImage || !enhancedImage) return;
+    if (!comparisonSection || !originalImage || !enhancedImage) {
+      console.error('❌ 슬라이더 요소를 찾을 수 없습니다:', { comparisonSection, originalImage, enhancedImage });
+      return;
+    }
+    
+    console.log('🎨 슬라이더 표시 시작:', { originalUrl, enhancedUrl });
+    
+    // 이미지 로딩 완료 후 슬라이더 초기화
+    let imagesLoaded = 0;
+    const totalImages = 2;
+    
+    function onImageLoad() {
+      imagesLoaded++;
+      if (imagesLoaded === totalImages) {
+        console.log('✅ 모든 이미지 로딩 완료, 슬라이더 초기화');
+        comparisonSection.classList.remove('hidden');
+        initImageComparisonSlider();
+      }
+    }
+    
+    // 이미지 로딩 이벤트 설정
+    originalImage.onload = onImageLoad;
+    enhancedImage.onload = onImageLoad;
     
     // 이미지 소스 설정
     originalImage.src = originalUrl;
     enhancedImage.src = enhancedUrl;
     
-    // 슬라이더 섹션 표시
-    comparisonSection.classList.remove('hidden');
-    
-    // 슬라이더 재초기화
-    setTimeout(() => {
-      initImageComparisonSlider();
-    }, 100);
+    // 이미지가 이미 캐시되어 있는 경우를 위한 처리
+    if (originalImage.complete && enhancedImage.complete) {
+      onImageLoad();
+      onImageLoad();
+    }
   }
 
   // 오류 표시
