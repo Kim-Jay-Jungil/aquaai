@@ -66,6 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
       notionConnBtn.addEventListener('click', testNotionConnection);
     }
 
+    // 간단한 Notion 테스트
+    const simpleNotionBtn = document.getElementById('simpleNotionBtn');
+    if (simpleNotionBtn) {
+      simpleNotionBtn.addEventListener('click', testSimpleNotion);
+    }
+
     // Notion 환경변수 확인
     const notionEnvBtn = document.getElementById('notionEnvBtn');
     if (notionEnvBtn) {
@@ -594,6 +600,17 @@ document.addEventListener('DOMContentLoaded', function() {
       showAPITestResult('Notion 연결', response.status, data);
     } catch (error) {
       showAPITestResult('Notion 연결', 0, { error: error.message });
+    }
+  }
+
+  // 간단한 Notion 테스트
+  async function testSimpleNotion() {
+    try {
+      const response = await fetch('/api/simple-notion-test');
+      const data = await response.json();
+      showAPITestResult('간단 Notion', response.status, data);
+    } catch (error) {
+      showAPITestResult('간단 Notion', 0, { error: error.message });
     }
   }
 
