@@ -20,16 +20,48 @@ document.addEventListener('DOMContentLoaded', function() {
   function init() {
     console.log('🔧 앱 초기화 중...');
     
+    // DOM 요소 확인
+    console.log('🔍 DOM 요소 상태:', {
+      fileInput: Boolean(fileInput),
+      uploadArea: Boolean(uploadArea),
+      enhanceButton: Boolean(enhanceButton)
+    });
+    
     // 이벤트 리스너 등록
-    if (fileInput) fileInput.addEventListener('change', handleFileSelect);
+    if (fileInput) {
+      console.log('✅ fileInput 이벤트 리스너 등록');
+      fileInput.addEventListener('change', handleFileSelect);
+    } else {
+      console.error('❌ fileInput을 찾을 수 없음');
+    }
+    
     if (uploadArea) {
-      uploadArea.addEventListener('click', () => fileInput && fileInput.click());
+      console.log('✅ uploadArea 이벤트 리스너 등록');
+      // 중복 클릭 방지
+      let isDialogOpen = false;
+      uploadArea.addEventListener('click', () => {
+        if (!isDialogOpen && fileInput) {
+          isDialogOpen = true;
+          fileInput.click();
+          // 다이얼로그가 닫힌 후 플래그 리셋
+          setTimeout(() => { isDialogOpen = false; }, 100);
+        }
+      });
       uploadArea.addEventListener('dragover', handleDragOver);
       uploadArea.addEventListener('drop', handleDrop);
+    } else {
+      console.error('❌ uploadArea를 찾을 수 없음');
     }
-    if (enhanceButton) enhanceButton.addEventListener('click', startEnhancement);
+    
+    if (enhanceButton) {
+      console.log('✅ enhanceButton 이벤트 리스너 등록');
+      enhanceButton.addEventListener('click', startEnhancement);
+    } else {
+      console.error('❌ enhanceButton을 찾을 수 없음');
+    }
 
     // API 테스트 버튼들
+    console.log('🔧 API 테스트 버튼 설정 시작');
     setupAPITestButtons();
     
     console.log('✅ 앱 초기화 완료');
@@ -57,25 +89,46 @@ document.addEventListener('DOMContentLoaded', function() {
     // Notion 테스트
     const notionTestBtn = document.getElementById('notionTestBtn');
     if (notionTestBtn) {
+      console.log('✅ Notion 테스트 버튼 이벤트 리스너 등록');
       notionTestBtn.addEventListener('click', testNotion);
+    } else {
+      console.error('❌ Notion 테스트 버튼을 찾을 수 없음');
     }
 
     // Notion 연결 테스트
     const notionConnBtn = document.getElementById('notionConnBtn');
     if (notionConnBtn) {
+      console.log('✅ Notion 연결 버튼 이벤트 리스너 등록');
       notionConnBtn.addEventListener('click', testNotionConnection);
+    } else {
+      console.error('❌ Notion 연결 버튼을 찾을 수 없음');
     }
 
     // 간단한 Notion 테스트
     const simpleNotionBtn = document.getElementById('simpleNotionBtn');
     if (simpleNotionBtn) {
+      console.log('✅ 간단 Notion 버튼 이벤트 리스너 등록');
       simpleNotionBtn.addEventListener('click', testSimpleNotion);
+    } else {
+      console.error('❌ 간단 Notion 버튼을 찾을 수 없음');
+    }
+
+    // 기본 테스트
+    const basicTestBtn = document.getElementById('basicTestBtn');
+    if (basicTestBtn) {
+      console.log('✅ 기본 테스트 버튼 이벤트 리스너 등록');
+      basicTestBtn.addEventListener('click', testBasic);
+    } else {
+      console.error('❌ 기본 테스트 버튼을 찾을 수 없음');
     }
 
     // Notion 환경변수 확인
     const notionEnvBtn = document.getElementById('notionEnvBtn');
     if (notionEnvBtn) {
+      console.log('✅ Notion 환경변수 버튼 이벤트 리스너 등록');
       notionEnvBtn.addEventListener('click', checkNotionEnv);
+    } else {
+      console.error('❌ Notion 환경변수 버튼을 찾을 수 없음');
     }
 
     // 환경변수 확인
@@ -580,47 +633,83 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Notion 테스트
   async function testNotion() {
+    console.log('🧪 Notion 테스트 시작');
     try {
+      console.log('📡 /api/test-notion POST 호출 중...');
       const response = await fetch('/api/test-notion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+      console.log('📡 응답 상태:', response.status);
       const data = await response.json();
+      console.log('📡 응답 데이터:', data);
       showAPITestResult('Notion 테스트', response.status, data);
     } catch (error) {
+      console.error('❌ Notion 테스트 실패:', error);
       showAPITestResult('Notion 테스트', 0, { error: error.message });
     }
   }
 
   // Notion 연결 테스트
   async function testNotionConnection() {
+    console.log('🧪 Notion 연결 테스트 시작');
     try {
+      console.log('📡 /api/test-notion-connection 호출 중...');
       const response = await fetch('/api/test-notion-connection');
+      console.log('📡 응답 상태:', response.status);
       const data = await response.json();
+      console.log('📡 응답 데이터:', data);
       showAPITestResult('Notion 연결', response.status, data);
     } catch (error) {
+      console.error('❌ Notion 연결 테스트 실패:', error);
       showAPITestResult('Notion 연결', 0, { error: error.message });
     }
   }
 
   // 간단한 Notion 테스트
   async function testSimpleNotion() {
+    console.log('🧪 간단 Notion 테스트 시작');
     try {
+      console.log('📡 /api/simple-notion-test 호출 중...');
       const response = await fetch('/api/simple-notion-test');
+      console.log('📡 응답 상태:', response.status);
       const data = await response.json();
+      console.log('📡 응답 데이터:', data);
       showAPITestResult('간단 Notion', response.status, data);
     } catch (error) {
+      console.error('❌ 간단 Notion 테스트 실패:', error);
       showAPITestResult('간단 Notion', 0, { error: error.message });
+    }
+  }
+
+  // 기본 테스트
+  async function testBasic() {
+    console.log('🧪 기본 테스트 시작');
+    try {
+      console.log('📡 /api/basic-test 호출 중...');
+      const response = await fetch('/api/basic-test');
+      console.log('📡 응답 상태:', response.status);
+      const data = await response.json();
+      console.log('📡 응답 데이터:', data);
+      showAPITestResult('기본 테스트', response.status, data);
+    } catch (error) {
+      console.error('❌ 기본 테스트 실패:', error);
+      showAPITestResult('기본 테스트', 0, { error: error.message });
     }
   }
 
   // Notion 환경변수 확인
   async function checkNotionEnv() {
+    console.log('🧪 Notion 환경변수 확인 시작');
     try {
+      console.log('📡 /api/check-notion-env 호출 중...');
       const response = await fetch('/api/check-notion-env');
+      console.log('📡 응답 상태:', response.status);
       const data = await response.json();
+      console.log('📡 응답 데이터:', data);
       showAPITestResult('Notion 환경변수', response.status, data);
     } catch (error) {
+      console.error('❌ Notion 환경변수 확인 실패:', error);
       showAPITestResult('Notion 환경변수', 0, { error: error.message });
     }
   }
