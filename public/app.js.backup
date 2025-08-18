@@ -242,60 +242,14 @@
       console.log('Presigned URL received, uploading to S3...');
 
       // S3에 직접 업로드
-      console.log('🔗 S3 업로드 시작...');
-      
-      // Content-Type 헤더 최적화
-      let optimizedContentType = file.type;
-      if (file.type === 'image/webp') {
-        optimizedContentType = 'image/webp';
-      } else if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
-        optimizedContentType = 'image/jpeg';
-      } else if (file.type === 'image/png') {
-        optimizedContentType = 'image/png';
-      }
-      
-      console.log('📋 업로드 정보:', {
-        url: data.url,
-        method: 'PUT',
-        originalContentType: file.type,
-        optimizedContentType: optimizedContentType,
-        fileSize: file.size,
-        fileName: file.name,
-        sanitizedName: safeFilename
-      });
-      
       const uploadResponse = await fetch(data.url, {
         method: 'PUT',
-        headers: { 
-          'content-type': optimizedContentType,
-          'x-amz-acl': 'public-read' // 공개 읽기 권한 추가
-        },
+        headers: { 'content-type': file.type },
         body: file
       });
 
-      console.log('📤 S3 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
-      console.log('📋 S3 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
-
       if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text();
-        console.error('❌ S3 업로드 실패:', errorText);
-        console.error('❌ S3 응답 상태:', uploadResponse.status, uploadResponse.statusText);
-        console.error('❌ S3 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
-        
-        // 특정 오류 코드별 상세 메시지
-        let detailedError = `S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`;
-        
-        if (uploadResponse.status === 403) {
-          detailedError = 'S3 접근 권한 오류: AWS 설정을 확인하세요.';
-        } else if (uploadResponse.status === 400) {
-          detailedError = 'S3 요청 오류: 파일 형식이나 크기를 확인하세요.';
-        } else if (uploadResponse.status === 500) {
-          detailedError = 'S3 서버 오류: 잠시 후 다시 시도하세요.';
-        } else if (uploadResponse.status === 0) {
-          detailedError = '네트워크 오류: 인터넷 연결을 확인하세요.';
-        }
-        
-        throw new Error(detailedError);
+        throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
       }
 
       console.log('File uploaded to S3 successfully');
