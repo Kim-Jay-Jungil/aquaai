@@ -15,6 +15,9 @@
   --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.15);
   --radius: 8px;
   --transition: all 0.3s ease;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-color: #ffc107;
 }
 
 * {
@@ -478,6 +481,63 @@ body {
 
 .result-actions {
   text-align: center;
+}
+
+/* 결과 메타데이터 */
+.result-meta {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.meta-item:last-child {
+  border-bottom: none;
+}
+
+.meta-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.meta-value {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.meta-value.success {
+  color: var(--success-color);
+}
+
+.meta-value.error {
+  color: var(--error-color);
+}
+
+.notion-status {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.notion-error-detail {
+  color: var(--error-color);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(220, 53, 69, 0.2);
 }
 
 /* 특징 섹션 */

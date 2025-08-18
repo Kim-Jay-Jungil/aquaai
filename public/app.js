@@ -54,6 +54,12 @@ document.addEventListener('DOMContentLoaded', function() {
       s3TestBtn.addEventListener('click', testS3);
     }
 
+    // Notion 테스트
+    const notionTestBtn = document.getElementById('notionTestBtn');
+    if (notionTestBtn) {
+      notionTestBtn.addEventListener('click', testNotion);
+    }
+
     // 환경변수 확인
     const envCheckBtn = document.getElementById('envCheckBtn');
     if (envCheckBtn) {
@@ -403,7 +409,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="image-wrapper">
                   <h4>향상된 이미지</h4>
                   <img src="${result.enhancedUrl}" alt="향상된 이미지" onerror="this.parentElement.innerHTML='<div class=\'image-error\'>이미지를 불러올 수 없습니다</div>'">
-                  <a href="${result.enhancedUrl}" target="_blank" class="image-link">🔗 향상된 이미지 보기</a>
+                  <a href="${result.originalUrl}" target="_blank" class="image-link">🔗 향상된 이미지 보기</a>
+                </div>
+              </div>
+              <div class="result-meta">
+                <div class="meta-item">
+                  <span class="meta-label">처리 시간:</span>
+                  <span class="meta-value">${result.processingTime || 'N/A'}ms</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">보정 강도:</span>
+                  <span class="meta-value">${result.enhancementLevel || 'auto'}</span>
+                </div>
+                <div class="meta-item notion-status">
+                  <span class="meta-label">Notion 저장:</span>
+                  <span class="meta-value ${result.notionLogged ? 'success' : 'error'}">
+                    ${result.notionLogged ? '✅ 성공' : '❌ 실패'}
+                  </span>
+                  ${!result.notionLogged && result.notionError ? `
+                    <div class="notion-error-detail">
+                      <small>${result.notionError.message || '알 수 없는 오류'}</small>
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             </div>
@@ -530,6 +557,20 @@ document.addEventListener('DOMContentLoaded', function() {
       showAPITestResult('S3 테스트', response.status, data);
     } catch (error) {
       showAPITestResult('S3 테스트', 0, { error: error.message });
+    }
+  }
+
+  // Notion 테스트
+  async function testNotion() {
+    try {
+      const response = await fetch('/api/test-notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      showAPITestResult('Notion 테스트', response.status, data);
+    } catch (error) {
+      showAPITestResult('Notion 테스트', 0, { error: error.message });
     }
   }
 
