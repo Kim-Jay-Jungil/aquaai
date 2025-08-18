@@ -1,6 +1,6 @@
-// public/app-fixed.js - 완전히 새로운 버전 (presign 코드 완전 제거)
+// public/app-new.js - 직접 업로드 방식으로 변경된 버전
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 Aqua.AI 앱 로딩 시작 (수정된 버전)...');
+  console.log('🚀 Aqua.AI 앱 로딩 시작...');
 
   // DOM 요소들
   const fileInput = document.getElementById('fileInput');
@@ -21,13 +21,11 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 앱 초기화 중...');
     
     // 이벤트 리스너 등록
-    if (fileInput) fileInput.addEventListener('change', handleFileSelect);
-    if (uploadArea) {
-      uploadArea.addEventListener('click', () => fileInput && fileInput.click());
-      uploadArea.addEventListener('dragover', handleDragOver);
-      uploadArea.addEventListener('drop', handleDrop);
-    }
-    if (enhanceButton) enhanceButton.addEventListener('click', startEnhancement);
+    fileInput.addEventListener('change', handleFileSelect);
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('drop', handleDrop);
+    enhanceButton.addEventListener('click', startEnhancement);
 
     // API 테스트 버튼들
     setupAPITestButtons();
@@ -60,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
       envCheckBtn.addEventListener('click', checkEnvironment);
     }
 
-    // 이미지 URL 테스트 (직접 업로드 사용)
+    // 이미지 URL 테스트
     const imageUrlTestBtn = document.getElementById('imageUrlTestBtn');
     if (imageUrlTestBtn) {
       imageUrlTestBtn.addEventListener('click', testImageUrl);
@@ -156,8 +154,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 업로드 영역 업데이트
   function updateUploadArea() {
-    if (!uploadArea) return;
-    
     if (selectedFiles.length === 0) {
       uploadArea.innerHTML = `
         <div class="upload-placeholder">
@@ -203,26 +199,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 향상 버튼 업데이트
   function updateEnhanceButton() {
-    if (!enhanceButton) return;
-    
     enhanceButton.disabled = selectedFiles.length === 0 || isProcessing;
     enhanceButton.textContent = isProcessing ? '처리 중...' : '이미지 보정 시작';
   }
 
   // 진행률 바 표시/숨김
   function showProgressBar() {
-    if (!progressBar) return;
     progressBar.style.display = 'block';
     progressBar.style.width = '0%';
   }
 
   function hideProgressBar() {
-    if (!progressBar) return;
     progressBar.style.display = 'none';
   }
 
   function updateProgress(percent) {
-    if (!progressBar) return;
     progressBar.style.width = percent + '%';
   }
 
@@ -248,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateProgress(progress);
         
         try {
-          // 1단계: S3 업로드 (직접 업로드만 사용)
+          // 1단계: S3 업로드
           const uploadResult = await uploadToS3(file);
           console.log('✅ S3 업로드 성공:', uploadResult);
           
@@ -288,10 +279,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // S3 업로드 함수 (직접 업로드만 사용, presign 완전 제거)
+  // S3 업로드 함수 (직접 업로드 방식)
   async function uploadToS3(file) {
     try {
-      console.log('📤 S3 업로드 시작 (직접 업로드):', file.name, file.size, file.type);
+      console.log('📤 S3 업로드 시작:', file.name, file.size, file.type);
       
       // 파일 검증
       const validation = validateFile(file);
@@ -309,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const formData = new FormData();
       formData.append('file', file);
       
-      // 직접 업로드 API 호출 (presign 완전 제거)
+      // 직접 업로드 API 호출
       const response = await fetch('/api/upload-direct', {
         method: 'POST',
         body: formData
@@ -370,8 +361,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 결과 표시
   function showResults(results) {
-    if (!resultsContainer) return;
-    
     const successCount = results.filter(r => r.success).length;
     const failCount = results.filter(r => !r.success).length;
     
@@ -432,8 +421,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 오류 표시
   function showError(message) {
-    if (!resultsContainer) return;
-    
     resultsContainer.innerHTML = `
       <div class="result-item error">
         <div class="result-content">
@@ -448,12 +435,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 결과 초기화
   function clearResults() {
-    if (!resultsContainer) return;
     resultsContainer.innerHTML = '';
     resultsContainer.style.display = 'none';
   }
 
-  // API 테스트 함수들 (모두 직접 업로드 사용)
+  // API 테스트 함수들
   async function testSimpleAPI() {
     try {
       const response = await fetch('/api/test-simple');
@@ -494,32 +480,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // 이미지 URL 테스트 (직접 업로드 사용, presign 완전 제거)
   async function testImageUrl() {
     try {
-      console.log('🔍 이미지 URL 테스트 시작 (직접 업로드 방식)');
-      
       // 간단한 테스트 파일 생성
       const testFile = new File(['test content'], 'test-image.jpg', { type: 'image/jpeg' });
       const formData = new FormData();
       formData.append('file', testFile);
       
-      console.log('📤 /api/upload-direct 호출 중...');
-      
       const response = await fetch('/api/upload-direct', {
         method: 'POST',
         body: formData
       });
-      
-      console.log('📡 응답 상태:', response.status, response.statusText);
-      
       const data = await response.json();
-      console.log('📋 응답 데이터:', data);
-      
-      showAPITestResult('이미지 URL 테스트 (직접 업로드)', response.status, data);
+      showAPITestResult('이미지 URL 테스트', response.status, data);
     } catch (error) {
-      console.error('❌ 이미지 URL 테스트 실패:', error);
-      showAPITestResult('이미지 URL 테스트 (직접 업로드)', 0, { error: error.message });
+      showAPITestResult('이미지 URL 테스트', 0, { error: error.message });
     }
   }
 
@@ -541,26 +516,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       const file = selectedFiles[0];
-      console.log('🔍 실제 파일 테스트 시작:', file.name);
-      
       const formData = new FormData();
       formData.append('file', file);
-      
-      console.log('📤 /api/upload-direct 호출 중...');
       
       const response = await fetch('/api/upload-direct', {
         method: 'POST',
         body: formData
       });
-      
-      console.log('📡 응답 상태:', response.status, response.statusText);
-      
       const data = await response.json();
-      console.log('📋 응답 데이터:', data);
-      
       showAPITestResult('실제 파일 테스트', response.status, data);
     } catch (error) {
-      console.error('❌ 실제 파일 테스트 실패:', error);
       showAPITestResult('실제 파일 테스트', 0, { error: error.message });
     }
   }
@@ -608,6 +573,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
   }
 
-  console.log('🎉 Aqua.AI 앱 로딩 완료 (수정된 버전)!');
-  console.log('💡 이제 presign API를 사용하지 않고 직접 업로드만 사용합니다!');
+  console.log('🎉 Aqua.AI 앱 로딩 완료!');
 });
