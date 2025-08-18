@@ -385,8 +385,16 @@
           const file = e.target.files[0];
           if (file) {
             console.log('📁 선택된 파일:', file);
+            console.log('📋 파일 정보:', {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              lastModified: new Date(file.lastModified).toISOString()
+            });
             
             try {
+              console.log('🔍 Presign API 호출 시작...');
+              
               // Presign API 호출
               const response = await fetch('/api/presign-put', {
                 method: 'POST',
@@ -397,9 +405,24 @@
                 })
               });
               
+              console.log('📡 Presign API 응답:', response.status, response.statusText);
+              console.log('📋 응답 헤더:', Object.fromEntries(response.headers.entries()));
+              
               if (response.ok) {
                 const data = await response.json();
                 console.log('✅ Presign API 성공:', data);
+                
+                if (!data.url) {
+                  throw new Error('Presign 응답에 URL이 없습니다: ' + JSON.stringify(data));
+                }
+                
+                console.log('🔗 S3 업로드 시작...');
+                console.log('📋 업로드 정보:', {
+                  url: data.url,
+                  method: 'PUT',
+                  contentType: file.type,
+                  fileSize: file.size
+                });
                 
                 // S3 업로드
                 const uploadResponse = await fetch(data.url, {
@@ -411,22 +434,105 @@
                   body: file
                 });
                 
+                console.log('📤 S3 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
+                console.log('📋 S3 응답 헤더:', Object.fromEntries(uploadResponse.headers.entries()));
+                
                 if (uploadResponse.ok) {
-                  alert(`✅ 파일 업로드 성공!\n\n파일: ${file.name}\n크기: ${(file.size / 1024).toFixed(2)}KB\n타입: ${file.type}`);
+                  alert(`✅ 파일 업로드 성공!\n\n파일: ${file.name}\n크기: ${(file.size / 1024).toFixed(2)}KB\n타입: ${file.type}\n\nS3 Key: ${data.key || 'N/A'}\nPublic URL: ${data.publicUrl || 'N/A'}`);
                 } else {
                   const errorText = await uploadResponse.text();
-                  alert(`❌ S3 업로드 실패!\n\n파일: ${file.name}\n상태: ${uploadResponse.status}\n오류: ${errorText}`);
+                  console.error('❌ S3 업로드 실패:', errorText);
+                  alert(`❌ S3 업로드 실패!\n\n파일: ${file.name}\n상태: ${uploadResponse.status}\n상태 텍스트: ${uploadResponse.statusText}\n\n오류 내용: ${errorText}`);
                 }
               } else {
-                const errorData = await response.json();
-                alert(`❌ Presign API 실패!\n\n파일: ${file.name}\n오류: ${JSON.stringify(errorData, null, 2)}`);
+                const errorData = await response.json().catch(() => ({ error: '응답을 JSON으로 파싱할 수 없습니다' }));
+                console.error('❌ Presign API 실패:', errorData);
+                alert(`❌ Presign API 실패!\n\n파일: ${file.name}\n상태: ${response.status}\n상태 텍스트: ${response.statusText}\n\n오류: ${JSON.stringify(errorData, null, 2)}`);
               }
             } catch (error) {
-              alert(`❌ 업로드 테스트 오류!\n\n파일: ${file.name}\n오류: ${error.message}`);
+              console.error('💥 업로드 테스트 오류:', error);
+              console.error('💥 오류 상세:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+              });
+              
+              let errorMessage = error.message;
+              if (error.message === 'Failed to fetch') {
+                errorMessage = '네트워크 요청 실패: API 엔드포인트에 연결할 수 없습니다. 서버 상태를 확인하세요.';
+              }
+              
+              alert(`❌ 업로드 테스트 오류!\n\n파일: ${file.name}\n오류: ${errorMessage}\n\n💡 브라우저 개발자 도구(F12)의 콘솔 탭에서 상세한 오류 로그를 확인하세요.`);
             }
           }
         };
         input.click();
+      };
+      
+      // API 상태 확인 기능 추가
+      const checkApiStatusBtn = document.createElement('button');
+      checkApiStatusBtn.textContent = '🔍 API 상태 확인';
+      checkApiStatusBtn.className = 'btn btn-outline';
+      checkApiStatusBtn.style.marginTop = '10px';
+      checkApiStatusBtn.style.marginLeft = '10px';
+      checkApiStatusBtn.onclick = async function() {
+        try {
+          console.log('🔍 API 상태 확인 시작...');
+          
+          // 1. 기본 API 엔드포인트 확인
+          const healthResponse = await fetch('/api/health');
+          console.log('📡 Health API 응답:', healthResponse.status, healthResponse.statusText);
+          
+          // 2. Presign API 엔드포인트 확인
+          const presignResponse = await fetch('/api/presign-put', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              filename: 'test.jpg',
+              contentType: 'image/jpeg'
+            })
+          });
+          console.log('📡 Presign API 응답:', presignResponse.status, presignResponse.statusText);
+          
+          // 3. 결과 요약
+          let statusMessage = '🔍 API 상태 확인 결과:\n\n';
+          
+          if (healthResponse.ok) {
+            statusMessage += '✅ Health API: 정상\n';
+          } else {
+            statusMessage += `❌ Health API: ${healthResponse.status} ${healthResponse.statusText}\n`;
+          }
+          
+          if (presignResponse.ok) {
+            statusMessage += '✅ Presign API: 정상\n';
+          } else {
+            statusMessage += `❌ Presign API: ${presignResponse.status} ${presignResponse.statusText}\n`;
+          }
+          
+          // 4. 네트워크 상태 확인
+          const networkInfo = {
+            userAgent: navigator.userAgent,
+            online: navigator.onLine,
+            connection: navigator.connection ? {
+              effectiveType: navigator.connection.effectiveType,
+              downlink: navigator.connection.downlink
+            } : 'N/A'
+          };
+          
+          statusMessage += `\n🌐 네트워크 정보:\n`;
+          statusMessage += `온라인 상태: ${networkInfo.online ? '✅ 온라인' : '❌ 오프라인'}\n`;
+          if (networkInfo.connection !== 'N/A') {
+            statusMessage += `연결 타입: ${networkInfo.connection.effectiveType}\n`;
+            statusMessage += `다운로드 속도: ${networkInfo.connection.downlink} Mbps\n`;
+          }
+          
+          console.log('📋 API 상태 확인 완료:', statusMessage);
+          alert(statusMessage);
+          
+        } catch (error) {
+          console.error('💥 API 상태 확인 오류:', error);
+          alert(`❌ API 상태 확인 실패!\n\n오류: ${error.message}\n\n💡 브라우저 개발자 도구(F12)의 콘솔 탭에서 상세한 오류 로그를 확인하세요.`);
+        }
       };
       
       // API 테스트 섹션에 버튼들 추가
@@ -435,6 +541,7 @@
         apiTestSection.appendChild(testImageBtn);
         apiTestSection.appendChild(testUploadBtn);
         apiTestSection.appendChild(testRealFileBtn);
+        apiTestSection.appendChild(checkApiStatusBtn);
       }
     });
   </script>
