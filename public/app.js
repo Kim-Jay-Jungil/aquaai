@@ -44,13 +44,74 @@
     });
   });
 
+  // 파일명 정리 함수
+  function sanitizeFilename(filename) {
+    // 특수문자 제거 및 안전한 파일명으로 변환
+    return filename
+      .replace(/[^a-zA-Z0-9._-]/g, '_') // 특수문자를 언더스코어로 변환
+      .replace(/_{2,}/g, '_') // 연속된 언더스코어를 하나로
+      .replace(/^_+|_+$/g, ''); // 앞뒤 언더스코어 제거
+  }
+
+  // 파일 검증 함수
+  function validateFile(file) {
+    const errors = [];
+    
+    // 파일 크기 검증 (10MB 제한)
+    if (file.size > 10 * 1024 * 1024) {
+      errors.push(`파일 크기가 10MB를 초과합니다. (현재: ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+    }
+    
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      errors.push(`이미지 파일만 업로드 가능합니다. (현재: ${file.type})`);
+    }
+    
+    // 파일명 검증
+    if (file.name.length > 100) {
+      errors.push(`파일명이 너무 깁니다. (현재: ${file.name.length}자)`);
+    }
+    
+    // 파일명 특수문자 검증
+    if (/[<>:"/\\|?*]/.test(file.name)) {
+      errors.push(`파일명에 사용할 수 없는 문자가 포함되어 있습니다.`);
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors: errors,
+      sanitizedName: sanitizeFilename(file.name)
+    };
+  }
+
   // 파일 선택 처리
   function handleFileSelect(event) {
     const files = Array.from(event.target.files);
     if (files.length > 0) {
-      selectedFiles = files;
-      updateUploadArea();
-      updateEnhanceButton();
+      // 파일 검증
+      const validFiles = [];
+      const invalidFiles = [];
+      
+      files.forEach(file => {
+        const validation = validateFile(file);
+        if (validation.isValid) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file);
+          console.warn(`⚠️ 파일 검증 실패: ${file.name}`, validation.errors);
+        }
+      });
+      
+      if (invalidFiles.length > 0) {
+        const errorMessage = `다음 파일들은 업로드할 수 없습니다:\n\n${invalidFiles.map(f => `• ${f.name}: ${validateFile(f).errors.join(', ')}`).join('\n')}`;
+        alert(errorMessage);
+      }
+      
+      if (validFiles.length > 0) {
+        selectedFiles = validFiles;
+        updateUploadArea();
+        updateEnhanceButton();
+      }
     }
   }
 
@@ -198,10 +259,20 @@
           
         } catch (fileError) {
           console.error(`❌ 파일 ${file.name} 처리 실패:`, fileError);
+          console.error(`❌ 오류 상세:`, {
+            message: fileError.message,
+            stack: fileError.stack,
+            name: fileError.name
+          });
+          
           // 개별 파일 실패해도 계속 진행
           results.push({
             filename: file.name,
-            error: fileError.message
+            error: fileError.message,
+            errorDetails: {
+              name: fileError.name,
+              stack: fileError.stack
+            }
           });
         }
       }
@@ -225,15 +296,15 @@
     try {
       console.log('📤 S3 업로드 시작:', file.name, file.size, file.type);
       
-      // 파일 크기 검증 (10MB 제한)
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('파일 크기가 10MB를 초과합니다.');
+      // 파일 검증
+      const validation = validateFile(file);
+      if (!validation.isValid) {
+        throw new Error(`파일 검증 실패: ${validation.errors.join(', ')}`);
       }
       
-      // 파일 타입 검증
-      if (!file.type.startsWith('image/')) {
-        throw new Error('이미지 파일만 업로드 가능합니다.');
-      }
+      // 안전한 파일명 사용
+      const safeFilename = validation.sanitizedName;
+      console.log('🔍 파일명 정리:', file.name, '→', safeFilename);
       
       console.log('🔍 파일 검증 통과, presign API 호출 중...');
       
@@ -242,7 +313,7 @@
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          filename: file.name, 
+          filename: safeFilename, 
           contentType: file.type 
         })
       });
@@ -310,6 +381,8 @@
         userMessage = '파일 크기 오류: 10MB 이하의 파일만 업로드 가능합니다.';
       } else if (error.message.includes('이미지 파일만 업로드 가능합니다')) {
         userMessage = '파일 타입 오류: 이미지 파일만 업로드 가능합니다.';
+      } else if (error.message.includes('파일 검증 실패')) {
+        userMessage = error.message;
       }
       
       throw new Error(userMessage);

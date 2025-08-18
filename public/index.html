@@ -303,10 +303,53 @@
         }
       };
       
-      // API 테스트 섹션에 이미지 테스트 버튼 추가
+      // 간단한 파일 업로드 테스트 기능 추가
+      const testUploadBtn = document.createElement('button');
+      testUploadBtn.textContent = '📤 간단 업로드 테스트';
+      testUploadBtn.className = 'btn btn-outline';
+      testUploadBtn.style.marginTop = '10px';
+      testUploadBtn.style.marginLeft = '10px';
+      testUploadBtn.onclick = async function() {
+        try {
+          console.log('🔍 간단한 업로드 테스트 시작');
+          
+          // 테스트용 더미 파일 생성
+          const testFile = new File(['test'], 'test-image.jpg', { type: 'image/jpeg' });
+          console.log('📁 테스트 파일 생성:', testFile);
+          
+          // Presign API 테스트
+          const response = await fetch('/api/presign-put', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              filename: 'test-image.jpg',
+              contentType: 'image/jpeg'
+            })
+          });
+          
+          console.log('📡 Presign API 응답:', response.status, response.statusText);
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Presign API 성공:', data);
+            alert('Presign API 테스트 성공!\n\n' + JSON.stringify(data, null, 2));
+          } else {
+            const errorData = await response.json();
+            console.error('❌ Presign API 실패:', errorData);
+            alert('Presign API 테스트 실패!\n\n' + JSON.stringify(errorData, null, 2));
+          }
+          
+        } catch (error) {
+          console.error('💥 업로드 테스트 오류:', error);
+          alert('업로드 테스트 오류: ' + error.message);
+        }
+      };
+      
+      // API 테스트 섹션에 버튼들 추가
       const apiTestSection = document.querySelector('.api-test-section');
       if (apiTestSection) {
         apiTestSection.appendChild(testImageBtn);
+        apiTestSection.appendChild(testUploadBtn);
       }
     });
   </script>
