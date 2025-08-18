@@ -717,3 +717,65 @@ body {
 .remove-file:hover {
   background: #c82333;
 }
+
+/* 이미지 오류 표시 스타일 */
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.image-url {
+  font-size: 0.8rem;
+  word-break: break-all;
+  max-width: 100%;
+  padding: 0 10px;
+  text-align: center;
+}
+
+/* 결과 오류 스타일 */
+.result-item.error {
+  border: 2px solid #dc3545;
+  background: #f8d7da;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.error-info h4 {
+  color: #721c24;
+  margin: 0 0 0.5rem 0;
+}
+
+.error-message {
+  color: #721c24;
+  margin: 0;
+  font-family: monospace;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 0.5rem;
+  border-radius: 4px;
+}

@@ -371,33 +371,73 @@
 
   // 결과 표시
   function showResults(results) {
-    $resultsGrid.innerHTML = results.map(result => `
-      <div class="result-item">
-        <div class="image-comparison">
-          <div class="image-container">
-            <h4>원본</h4>
-            <img src="${result.originalUrl}" alt="원본 이미지" />
-            <p class="filename">${result.filename}</p>
+    console.log('🎯 결과 표시 시작:', results);
+    
+    $resultsGrid.innerHTML = results.map((result, index) => {
+      console.log(`📸 결과 ${index + 1}:`, result);
+      
+      if (result.error) {
+        // 오류가 있는 경우
+        return `
+          <div class="result-item error">
+            <div class="error-info">
+              <h4>❌ ${result.filename} - 처리 실패</h4>
+              <p class="error-message">${result.error}</p>
+            </div>
           </div>
-          <div class="image-container">
-            <h4>보정된 이미지</h4>
-            <img src="${result.enhancedUrl}" alt="보정된 이미지" />
-            <p class="filename">${result.filename}_enhanced</p>
+        `;
+      }
+      
+      // 성공한 경우
+      const originalUrl = result.originalUrl;
+      const enhancedUrl = result.enhancedUrl;
+      
+      console.log(`🖼️ 원본 이미지 URL:`, originalUrl);
+      console.log(`🎨 보정된 이미지 URL:`, enhancedUrl);
+      
+      return `
+        <div class="result-item">
+          <div class="image-comparison">
+            <div class="image-container">
+              <h4>원본</h4>
+              <div class="image-wrapper">
+                <img src="${originalUrl}" alt="원본 이미지" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <div class="image-error" style="display: none; padding: 20px; text-align: center; color: #666;">
+                  <p>❌ 이미지를 불러올 수 없습니다</p>
+                  <p class="image-url">${originalUrl}</p>
+                </div>
+              </div>
+              <p class="filename">${result.filename}</p>
+            </div>
+            <div class="image-container">
+              <h4>보정된 이미지</h4>
+              <div class="image-wrapper">
+                <img src="${enhancedUrl}" alt="보정된 이미지" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <div class="image-error" style="display: none; padding: 20px; text-align: center; color: #666;">
+                  <p>❌ 이미지를 불러올 수 없습니다</p>
+                  <p class="image-url">${enhancedUrl}</p>
+                </div>
+              </div>
+              <p class="filename">${result.filename}_enhanced</p>
+            </div>
+          </div>
+          <div class="result-info">
+            <p><strong>처리 시간:</strong> ${result.processingTime || 'N/A'}ms</p>
+            <p><strong>Notion 저장:</strong> ${result.notionLogged ? '✅ 성공' : '❌ 실패'}</p>
+            <p><strong>원본 URL:</strong> <a href="${originalUrl}" target="_blank">${originalUrl}</a></p>
+            <p><strong>보정 URL:</strong> <a href="${enhancedUrl}" target="_blank">${enhancedUrl}</a></p>
+          </div>
+          <div class="result-actions">
+            <button class="btn btn-small" onclick="downloadImage('${enhancedUrl}', '${result.filename}_enhanced')">
+              다운로드
+            </button>
           </div>
         </div>
-        <div class="result-info">
-          <p><strong>처리 시간:</strong> ${result.processingTime}ms</p>
-          <p><strong>Notion 저장:</strong> ${result.notionLogged ? '✅ 성공' : '❌ 실패'}</p>
-        </div>
-        <div class="result-actions">
-          <button class="btn btn-small" onclick="downloadImage('${result.enhancedUrl}', '${result.filename}_enhanced')">
-            다운로드
-          </button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     $resultsSection.classList.remove('hidden');
+    console.log('✅ 결과 표시 완료');
   }
 
   function hideResults() {

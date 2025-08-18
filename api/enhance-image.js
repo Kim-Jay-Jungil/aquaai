@@ -50,6 +50,19 @@ export default async function handler(req, res) {
 
     // Notion 데이터베이스에 기록
     try {
+      console.log('📝 Notion DB에 기록 시작...');
+      console.log('📋 기록할 데이터:', {
+        filename: filename || 'enhanced_image',
+        email: email || 'anonymous@example.com',
+        original_url: imageUrl,
+        output_url: enhancedImageUrl,
+        status: 'enhanced',
+        enhancement_level: enhancementLevel,
+        processing_time: processingTime,
+        notes: `Enhanced with ${enhancementLevel} level in ${processingTime}ms`,
+        user_tier: 'free' // 기본값
+      });
+      
       const notionResult = await logSubmissionToNotion({
         filename: filename || 'enhanced_image',
         email: email || 'anonymous@example.com',
@@ -62,10 +75,30 @@ export default async function handler(req, res) {
         user_tier: 'free' // 기본값
       });
 
-      console.log('Successfully logged to Notion:', notionResult.id);
+      console.log('✅ Notion DB 기록 성공:', notionResult.id);
     } catch (notionError) {
-      console.error('Notion logging failed:', notionError);
+      console.error('❌ Notion DB 기록 실패:', notionError);
+      console.error('❌ Notion 오류 상세:', {
+        message: notionError.message,
+        stack: notionError.stack,
+        code: notionError.code,
+        status: notionError.status
+      });
+      
       // Notion 로깅 실패해도 이미지 보정은 성공으로 처리
+      // 하지만 클라이언트에게 Notion 실패 정보 전달
+      return res.status(200).json({
+        ok: true,
+        originalUrl: imageUrl,
+        enhancedUrl: enhancedImageUrl,
+        enhancementLevel,
+        processingTime,
+        notionLogged: false,
+        notionError: {
+          message: notionError.message,
+          code: notionError.code || 'UNKNOWN'
+        }
+      });
     }
 
     return res.status(200).json({

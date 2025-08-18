@@ -280,6 +280,34 @@
         });
         console.log('✅ 환경변수 확인 버튼 이벤트 리스너 추가됨');
       }
+      
+      // 이미지 URL 테스트 기능 추가
+      const testImageBtn = document.createElement('button');
+      testImageBtn.textContent = '🖼️ 이미지 URL 테스트';
+      testImageBtn.className = 'btn btn-outline';
+      testImageBtn.style.marginTop = '10px';
+      testImageBtn.onclick = function() {
+        const url = prompt('테스트할 이미지 URL을 입력하세요:');
+        if (url) {
+          console.log('🖼️ 이미지 URL 테스트:', url);
+          const img = new Image();
+          img.onload = function() {
+            console.log('✅ 이미지 로드 성공:', url);
+            alert('이미지 로드 성공!');
+          };
+          img.onerror = function() {
+            console.log('❌ 이미지 로드 실패:', url);
+            alert('이미지 로드 실패!');
+          };
+          img.src = url;
+        }
+      };
+      
+      // API 테스트 섹션에 이미지 테스트 버튼 추가
+      const apiTestSection = document.querySelector('.api-test-section');
+      if (apiTestSection) {
+        apiTestSection.appendChild(testImageBtn);
+      }
     });
   </script>
 
