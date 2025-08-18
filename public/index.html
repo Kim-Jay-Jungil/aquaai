@@ -180,6 +180,109 @@
     </div>
   </footer>
 
+  <script>
+    // 간단한 디버깅 스크립트
+    console.log('🚀 index.html 로드됨');
+    
+    // DOM 로드 완료 확인
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('📋 DOM 로드 완료');
+      
+      // API 테스트 버튼들 확인
+      const simpleApiBtn = document.getElementById('simpleApiBtn');
+      const apiTestBtn = document.getElementById('apiTestBtn');
+      const s3TestBtn = document.getElementById('s3TestBtn');
+      const envCheckBtn = document.getElementById('envCheckBtn');
+      
+      console.log('🔘 버튼 요소들:', {
+        simpleApiBtn,
+        apiTestBtn,
+        s3TestBtn,
+        envCheckBtn
+      });
+      
+      // 간단한 API 테스트 함수들 (임시)
+      if (simpleApiBtn) {
+        simpleApiBtn.addEventListener('click', async function() {
+          console.log('🔍 간단 API 테스트 버튼 클릭됨');
+          const resultDiv = document.getElementById('apiTestResult');
+          resultDiv.style.display = 'block';
+          resultDiv.textContent = '간단 API 테스트 중...';
+          
+          try {
+            const response = await fetch('/api/test-simple');
+            const data = await response.json();
+            resultDiv.textContent = `✅ 성공: ${JSON.stringify(data, null, 2)}`;
+          } catch (error) {
+            resultDiv.textContent = `❌ 오류: ${error.message}`;
+          }
+        });
+        console.log('✅ 간단 API 테스트 버튼 이벤트 리스너 추가됨');
+      }
+      
+      if (apiTestBtn) {
+        apiTestBtn.addEventListener('click', async function() {
+          console.log('🔍 API 테스트 버튼 클릭됨');
+          const resultDiv = document.getElementById('apiTestResult');
+          resultDiv.style.display = 'block';
+          resultDiv.textContent = 'API 테스트 중...';
+          
+          try {
+            const response = await fetch('/api/health');
+            const data = await response.json();
+            resultDiv.textContent = `✅ 성공: ${JSON.stringify(data, null, 2)}`;
+          } catch (error) {
+            resultDiv.textContent = `❌ 오류: ${error.message}`;
+          }
+        });
+        console.log('✅ API 테스트 버튼 이벤트 리스너 추가됨');
+      }
+      
+      if (s3TestBtn) {
+        s3TestBtn.addEventListener('click', async function() {
+          console.log('🔍 S3 테스트 버튼 클릭됨');
+          const resultDiv = document.getElementById('apiTestResult');
+          resultDiv.style.display = 'block';
+          resultDiv.textContent = 'S3 테스트 중...';
+          
+          try {
+            const response = await fetch('/api/presign-put', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({
+                filename: 'test-image.jpg',
+                contentType: 'image/jpeg'
+              })
+            });
+            const data = await response.json();
+            resultDiv.textContent = `✅ 성공: ${JSON.stringify(data, null, 2)}`;
+          } catch (error) {
+            resultDiv.textContent = `❌ 오류: ${error.message}`;
+          }
+        });
+        console.log('✅ S3 테스트 버튼 이벤트 리스너 추가됨');
+      }
+      
+      if (envCheckBtn) {
+        envCheckBtn.addEventListener('click', async function() {
+          console.log('🔍 환경변수 확인 버튼 클릭됨');
+          const resultDiv = document.getElementById('apiTestResult');
+          resultDiv.style.display = 'block';
+          resultDiv.textContent = '환경변수 확인 중...';
+          
+          try {
+            const response = await fetch('/api/debug-env');
+            const data = await response.json();
+            resultDiv.textContent = `✅ 성공: ${JSON.stringify(data, null, 2)}`;
+          } catch (error) {
+            resultDiv.textContent = `❌ 오류: ${error.message}`;
+          }
+        });
+        console.log('✅ 환경변수 확인 버튼 이벤트 리스너 추가됨');
+      }
+    });
+  </script>
+
   <script type="module" src="/app.js"></script>
 </body>
 </html>
