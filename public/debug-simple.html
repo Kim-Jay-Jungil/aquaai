@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 API 테스트</title>
+</head>
+<body>
+    <h1>🔍 간단한 API 테스트</h1>
+    
+    <button onclick="testSimple()">간단한 API 테스트</button>
+    <button onclick="testHealth()">헬스체크</button>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+    
+    <script>
+        async function testSimple() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '테스트 중...';
+            
+            try {
+                console.log('🔍 간단한 API 테스트 시작');
+                const response = await fetch('/api/test-simple');
+                console.log('📡 응답:', response.status, response.statusText);
+                
+                const text = await response.text();
+                console.log('📋 응답 내용:', text);
+                
+                resultDiv.innerHTML = `상태: ${response.status}<br>응답: ${text}`;
+            } catch (error) {
+                console.error('💥 에러:', error);
+                resultDiv.innerHTML = `에러: ${error.message}`;
+            }
+        }
+        
+        async function testHealth() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '헬스체크 중...';
+            
+            try {
+                console.log('🔍 헬스체크 시작');
+                const response = await fetch('/api/health');
+                console.log('📡 응답:', response.status, response.statusText);
+                
+                const text = await response.text();
+                console.log('📋 응답 내용:', text);
+                
+                resultDiv.innerHTML = `상태: ${response.status}<br>응답: ${text}`;
+            } catch (error) {
+                console.error('💥 에러:', error);
+                resultDiv.innerHTML = `에러: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

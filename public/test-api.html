@@ -70,17 +70,25 @@
             resultDiv.className = 'result info';
             resultDiv.textContent = '헬스체크 API 테스트 중...';
 
+            console.log('🔍 헬스체크 API 호출 시작: /api/health');
+
             try {
                 const response = await fetch('/api/health');
+                console.log('📡 응답 받음:', response.status, response.statusText);
+                
                 const contentType = response.headers.get('content-type');
+                console.log('📋 Content-Type:', contentType);
                 
                 if (!contentType || !contentType.includes('application/json')) {
+                    const responseText = await response.text();
+                    console.log('❌ Non-JSON 응답 내용:', responseText);
                     resultDiv.className = 'result error';
-                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${responseText}`;
                     return;
                 }
 
                 const data = await response.json();
+                console.log('✅ JSON 응답 데이터:', data);
                 
                 if (response.ok) {
                     resultDiv.className = 'result success';
@@ -90,6 +98,7 @@
                     resultDiv.textContent = `❌ 헬스체크 실패\n상태: ${response.status}\n오류: ${JSON.stringify(data, null, 2)}`;
                 }
             } catch (error) {
+                console.error('💥 에러 발생:', error);
                 resultDiv.className = 'result error';
                 resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
             }
@@ -101,6 +110,8 @@
             resultDiv.className = 'result info';
             resultDiv.textContent = 'Presign API 테스트 중...';
 
+            console.log('🔍 Presign API 호출 시작: /api/presign-put');
+
             try {
                 const response = await fetch('/api/presign-put', {
                     method: 'POST',
@@ -111,15 +122,20 @@
                     })
                 });
 
+                console.log('📡 응답 받음:', response.status, response.statusText);
                 const contentType = response.headers.get('content-type');
+                console.log('📋 Content-Type:', contentType);
                 
                 if (!contentType || !contentType.includes('application/json')) {
+                    const responseText = await response.text();
+                    console.log('❌ Non-JSON 응답 내용:', responseText);
                     resultDiv.className = 'result error';
-                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${responseText}`;
                     return;
                 }
 
                 const data = await response.json();
+                console.log('✅ JSON 응답 데이터:', data);
                 
                 if (response.ok && data.ok) {
                     resultDiv.className = 'result success';
@@ -129,6 +145,7 @@
                     resultDiv.textContent = `❌ Presign API 실패\n상태: ${response.status}\n오류: ${data.error || 'Unknown'}\n상세: ${data.detail || 'N/A'}\n메시지: ${data.message || 'N/A'}`;
                 }
             } catch (error) {
+                console.error('💥 에러 발생:', error);
                 resultDiv.className = 'result error';
                 resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
             }
@@ -140,17 +157,25 @@
             resultDiv.className = 'result info';
             resultDiv.textContent = '환경 변수 확인 중...';
 
+            console.log('🔍 환경 변수 확인 API 호출 시작: /api/debug-env');
+
             try {
                 const response = await fetch('/api/debug-env');
+                console.log('📡 응답 받음:', response.status, response.statusText);
+                
                 const contentType = response.headers.get('content-type');
+                console.log('📋 Content-Type:', contentType);
                 
                 if (!contentType || !contentType.includes('application/json')) {
+                    const responseText = await response.text();
+                    console.log('❌ Non-JSON 응답 내용:', responseText);
                     resultDiv.className = 'result error';
-                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
+                    resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${responseText}`;
                     return;
                 }
 
                 const data = await response.json();
+                console.log('✅ JSON 응답 데이터:', data);
                 
                 if (data.success) {
                     resultDiv.className = 'result success';
@@ -160,6 +185,7 @@
                     resultDiv.textContent = `❌ 환경 변수 확인 실패\n${data.error}`;
                 }
             } catch (error) {
+                console.error('💥 에러 발생:', error);
                 resultDiv.className = 'result error';
                 resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
             }
