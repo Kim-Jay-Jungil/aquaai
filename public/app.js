@@ -147,99 +147,132 @@
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // 이미지 보정 시작 (전체 플로우)
+  // 이미지 보정 시작
   async function startEnhancement() {
-    if (selectedFiles.length === 0 || isProcessing) return;
-
+    if (isProcessing || selectedFiles.length === 0) return;
+    
+    console.log('🚀 이미지 보정 시작');
+    console.log('📁 선택된 파일들:', selectedFiles);
+    
     isProcessing = true;
-    updateEnhanceButton();
-    showProgressBar();
-    hideResults();
-
+    $enhanceBtn.disabled = true;
+    $enhanceBtn.textContent = '처리 중...';
+    
     try {
+      showProgressBar();
+      hideResults();
+      
       const results = [];
-      const userEmail = $userEmail.value.trim() || 'anonymous@example.com';
+      const totalFiles = selectedFiles.length;
       
-      for (let i = 0; i < selectedFiles.length; i++) {
+      for (let i = 0; i < totalFiles; i++) {
         const file = selectedFiles[i];
+        console.log(`📤 파일 ${i + 1}/${totalFiles} 업로드 시작:`, file.name);
         
-        // 진행률 업데이트
-        updateProgress((i / selectedFiles.length) * 100);
-        
-        console.log(`Processing file ${i + 1}/${selectedFiles.length}: ${file.name}`);
-        
-        // 1. S3에 업로드
-        const uploadResult = await uploadToS3(file);
-        console.log('File uploaded to S3:', uploadResult.publicUrl);
-        
-        // 2. 이미지 보정 및 Notion DB 저장
-        const enhanceResult = await enhanceImage(uploadResult.publicUrl, file.name, userEmail);
-        console.log('Image enhancement completed:', enhanceResult);
-        
-        results.push({
-          originalFile: file,
-          originalUrl: uploadResult.publicUrl,
-          enhancedUrl: enhanceResult.enhancedUrl,
-          filename: file.name,
-          processingTime: enhanceResult.processingTime,
-          notionLogged: enhanceResult.notionLogged
-        });
+        try {
+          // 진행률 업데이트
+          const progress = ((i + 1) / totalFiles) * 100;
+          updateProgress(progress);
+          
+          // S3에 업로드
+          console.log('🔗 S3 업로드 시작...');
+          const uploadResult = await uploadToS3(file);
+          console.log('✅ S3 업로드 성공:', uploadResult);
+          
+          // 이미지 보정
+          console.log('🎨 이미지 보정 시작...');
+          const enhanceResult = await enhanceImage(
+            uploadResult.publicUrl || uploadResult.url, 
+            file.name, 
+            $userEmail.value
+          );
+          console.log('✅ 이미지 보정 성공:', enhanceResult);
+          
+          results.push({
+            filename: file.name,
+            originalUrl: uploadResult.publicUrl || uploadResult.url,
+            enhancedUrl: enhanceResult.enhancedUrl,
+            processingTime: enhanceResult.processingTime,
+            notionLogged: enhanceResult.notionLogged
+          });
+          
+        } catch (fileError) {
+          console.error(`❌ 파일 ${file.name} 처리 실패:`, fileError);
+          // 개별 파일 실패해도 계속 진행
+          results.push({
+            filename: file.name,
+            error: fileError.message
+          });
+        }
       }
-
-      // 완료
-      updateProgress(100);
-      await new Promise(resolve => setTimeout(resolve, 500)); // 진행률 바 완료 애니메이션
       
+      console.log('🎯 모든 파일 처리 완료:', results);
       showResults(results);
       
-      // 성공 메시지
-      alert(`🎉 ${selectedFiles.length}개 이미지 보정이 완료되었습니다!\n\n모든 결과가 Notion 데이터베이스에 저장되었습니다.`);
-      
     } catch (error) {
-      console.error('Enhancement failed:', error);
+      console.error('💥 전체 처리 실패:', error);
       alert(`이미지 보정 중 오류가 발생했습니다: ${error.message}`);
     } finally {
       isProcessing = false;
-      updateEnhanceButton();
+      $enhanceBtn.disabled = false;
+      $enhanceBtn.textContent = '이미지 보정 시작';
       hideProgressBar();
     }
   }
 
-  // S3 업로드
+  // S3 업로드 함수
   async function uploadToS3(file) {
     try {
-      console.log('Starting S3 upload for file:', file.name);
+      console.log('📤 S3 업로드 시작:', file.name, file.size, file.type);
       
+      // 파일 크기 검증 (10MB 제한)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('파일 크기가 10MB를 초과합니다.');
+      }
+      
+      // 파일 타입 검증
+      if (!file.type.startsWith('image/')) {
+        throw new Error('이미지 파일만 업로드 가능합니다.');
+      }
+      
+      console.log('🔍 파일 검증 통과, presign API 호출 중...');
+      
+      // Presign API 호출
       const response = await fetch('/api/presign-put', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           filename: file.name, 
           contentType: file.type 
         })
       });
 
+      console.log('📡 Presign API 응답:', response.status, response.statusText);
+
       // 응답 타입 확인
       const contentType = response.headers.get('content-type');
+      console.log('📋 Content-Type:', contentType);
+      
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('Non-JSON response:', contentType);
-        console.error('Response status:', response.status);
-        console.error('Response text:', await response.text());
+        const responseText = await response.text();
+        console.error('❌ Non-JSON 응답:', responseText);
         throw new Error('서버에서 JSON 응답을 반환하지 않았습니다. API 엔드포인트를 확인하세요.');
       }
 
       const data = await response.json();
+      console.log('✅ Presign API 응답 데이터:', data);
       
       if (!response.ok) {
-        console.error('Presign API error:', data);
+        console.error('❌ Presign API 오류:', data);
         throw new Error(data.message || data.error || data.detail || 'Upload failed');
       }
 
       if (!data.url) {
+        console.error('❌ Presign 응답에 URL 누락:', data);
         throw new Error('Invalid presign response: missing upload URL');
       }
 
-      console.log('Presigned URL received, uploading to S3...');
+      console.log('🔗 Presigned URL 받음, S3에 직접 업로드 중...');
 
       // S3에 직접 업로드
       const uploadResponse = await fetch(data.url, {
@@ -248,15 +281,19 @@
         body: file
       });
 
+      console.log('📤 S3 업로드 응답:', uploadResponse.status, uploadResponse.statusText);
+
       if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('❌ S3 업로드 실패:', errorText);
         throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
       }
 
-      console.log('File uploaded to S3 successfully');
+      console.log('✅ S3 업로드 성공');
       return data;
       
     } catch (error) {
-      console.error('S3 upload error:', error);
+      console.error('💥 S3 업로드 오류:', error);
       
       // 사용자 친화적인 에러 메시지
       let userMessage = '파일 업로드에 실패했습니다.';
@@ -269,6 +306,10 @@
         userMessage = 'AWS 설정 오류: S3 접근 권한을 확인하세요.';
       } else if (error.message.includes('network')) {
         userMessage = '네트워크 오류: 인터넷 연결을 확인하세요.';
+      } else if (error.message.includes('파일 크기가 10MB를 초과합니다')) {
+        userMessage = '파일 크기 오류: 10MB 이하의 파일만 업로드 가능합니다.';
+      } else if (error.message.includes('이미지 파일만 업로드 가능합니다')) {
+        userMessage = '파일 타입 오류: 이미지 파일만 업로드 가능합니다.';
       }
       
       throw new Error(userMessage);
@@ -278,7 +319,10 @@
   // 이미지 보정 API 호출 (Notion DB 저장 포함)
   async function enhanceImage(imageUrl, filename, email) {
     try {
-      console.log('Starting image enhancement for:', filename);
+      console.log('🎨 이미지 보정 시작:', filename);
+      console.log('🔗 이미지 URL:', imageUrl);
+      console.log('📧 사용자 이메일:', email);
+      console.log('⚙️ 보정 강도:', selectedEnhancementLevel);
       
       const response = await fetch('/api/enhance-image', {
         method: 'POST',
@@ -291,18 +335,21 @@
         })
       });
 
+      console.log('📡 보정 API 응답:', response.status, response.statusText);
+
       const data = await response.json();
+      console.log('✅ 보정 API 응답 데이터:', data);
       
       if (!response.ok) {
-        console.error('Enhancement API error:', data);
+        console.error('❌ 보정 API 오류:', data);
         throw new Error(data.error || data.detail || 'Enhancement failed');
       }
 
-      console.log('Image enhancement API response:', data);
+      console.log('🎯 이미지 보정 완료:', data);
       return data;
       
     } catch (error) {
-      console.error('Image enhancement error:', error);
+      console.error('💥 이미지 보정 오류:', error);
       throw new Error(`이미지 보정 실패: ${error.message}`);
     }
   }
