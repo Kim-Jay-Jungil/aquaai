@@ -3,8 +3,25 @@ import { Client } from "@notionhq/client";
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const DB = process.env.NOTION_DB_SUBMISSIONS;
 
+// 환경변수 상태 로깅
+console.log('🔧 Notion 라이브러리 초기화:', {
+  hasApiKey: Boolean(process.env.NOTION_API_KEY),
+  apiKeyLength: process.env.NOTION_API_KEY ? process.env.NOTION_API_KEY.length : 0,
+  hasDB: Boolean(DB),
+  dbLength: DB ? DB.length : 0
+});
+
 export async function logSubmissionToNotion(payload) {
-  if (!DB) throw new Error("NOTION_DB_SUBMISSIONS missing");
+  console.log('🔍 logSubmissionToNotion 시작:', { 
+    hasDB: Boolean(DB), 
+    dbLength: DB ? DB.length : 0,
+    payloadKeys: Object.keys(payload)
+  });
+  
+  if (!DB) {
+    console.error('❌ NOTION_DB_SUBMISSIONS missing');
+    throw new Error("NOTION_DB_SUBMISSIONS missing");
+  }
 
   const {
     filename,
