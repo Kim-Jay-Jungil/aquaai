@@ -10,6 +10,13 @@
   const $optionButtons = document.querySelectorAll('.option-btn');
   const $userEmail = document.getElementById('userEmail');
   
+  // API 테스트 관련 요소들
+  const $simpleApiBtn = document.getElementById('simpleApiBtn');
+  const $apiTestBtn = document.getElementById('apiTestBtn');
+  const $s3TestBtn = document.getElementById('s3TestBtn');
+  const $envCheckBtn = document.getElementById('envCheckBtn');
+  const $apiTestResult = document.getElementById('apiTestResult');
+  
   // 상태 변수들
   let selectedFiles = [];
   let selectedEnhancementLevel = 'auto';
@@ -21,6 +28,12 @@
   $uploadArea.addEventListener('dragover', handleDragOver);
   $uploadArea.addEventListener('drop', handleDrop);
   $enhanceBtn.addEventListener('click', startEnhancement);
+  
+  // API 테스트 버튼 이벤트 리스너
+  if ($simpleApiBtn) $simpleApiBtn.addEventListener('click', testSimpleAPI);
+  if ($apiTestBtn) $apiTestBtn.addEventListener('click', testAPI);
+  if ($s3TestBtn) $s3TestBtn.addEventListener('click', testPresign);
+  if ($envCheckBtn) $envCheckBtn.addEventListener('click', checkEnvironment);
   
   // 보정 강도 선택 버튼 이벤트
   $optionButtons.forEach(btn => {
@@ -77,22 +90,39 @@
         </div>
         <input id="fileInput" type="file" accept="image/*" multiple />
       `;
+      
+      // 파일 입력 이벤트 리스너 다시 등록
+      const newFileInput = $uploadArea.querySelector('#fileInput');
+      if (newFileInput) {
+        newFileInput.addEventListener('change', handleFileSelect);
+      }
     } else {
       $uploadArea.innerHTML = `
         <div class="selected-files">
           <h4>선택된 파일 (${selectedFiles.length}개)</h4>
-          <div class="file-list">
+          <div class="file-preview-grid">
             ${selectedFiles.map((file, index) => `
-              <div class="file-item">
-                <span class="file-name">${file.name}</span>
-                <span class="file-size">${formatFileSize(file.size)}</span>
-                <button class="remove-file" onclick="removeFile(${index})">×</button>
+              <div class="file-preview-item">
+                <div class="file-preview-image">
+                  <img src="${URL.createObjectURL(file)}" alt="${file.name}" />
+                </div>
+                <div class="file-info">
+                  <span class="file-name">${file.name}</span>
+                  <span class="file-size">${formatFileSize(file.size)}</span>
+                  <button class="remove-file" onclick="removeFile(${index})">×</button>
+                </div>
               </div>
             `).join('')}
           </div>
         </div>
         <input id="fileInput" type="file" accept="image/*" multiple />
       `;
+      
+      // 파일 입력 이벤트 리스너 다시 등록
+      const newFileInput = $uploadArea.querySelector('#fileInput');
+      if (newFileInput) {
+        newFileInput.addEventListener('change', handleFileSelect);
+      }
     }
   }
 
@@ -363,86 +393,44 @@
     }
   });
 
-  // API 테스트 함수들 (전역으로 노출)
-  window.testSimpleAPI = async function() {
-    const resultDiv = document.getElementById('apiTestResult');
-    resultDiv.style.display = 'block';
-    resultDiv.style.background = '#fff3cd';
-    resultDiv.style.color = '#856404';
-    resultDiv.textContent = '간단한 API 테스트 중...';
-
+  // API 테스트 함수들
+  async function testSimpleAPI() {
+    showApiResult('간단 API 테스트 중...', 'info');
+    
     try {
       const response = await fetch('/api/test-simple');
-      const contentType = response.headers.get('content-type');
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
-        return;
-      }
-
       const data = await response.json();
       
       if (response.ok) {
-        resultDiv.style.background = '#d4edda';
-        resultDiv.style.color = '#155724';
-        resultDiv.textContent = `✅ 간단한 API 성공!\n\n메시지: ${data.message}\n상태: ${data.status}\n시간: ${data.timestamp}\nURL: ${data.url}`;
+        showApiResult(`✅ 간단 API 테스트 성공!\n\n${JSON.stringify(data, null, 2)}`, 'success');
       } else {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ 간단한 API 실패\n상태: ${response.status}\n오류: ${JSON.stringify(data, null, 2)}`;
+        showApiResult(`❌ API 테스트 실패\n상태: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
       }
     } catch (error) {
-      resultDiv.style.background = '#f8d7da';
-      resultDiv.style.color = '#721c24';
-      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
     }
-  };
+  }
 
-  window.testAPI = async function() {
-    const resultDiv = document.getElementById('apiTestResult');
-    resultDiv.style.display = 'block';
-    resultDiv.style.background = '#fff3cd';
-    resultDiv.style.color = '#856404';
-    resultDiv.textContent = '헬스체크 API 테스트 중...';
-
+  async function testAPI() {
+    showApiResult('API 테스트 중...', 'info');
+    
     try {
       const response = await fetch('/api/health');
-      const contentType = response.headers.get('content-type');
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
-        return;
-      }
-
       const data = await response.json();
       
       if (response.ok) {
-        resultDiv.style.background = '#d4edda';
-        resultDiv.style.color = '#155724';
-        resultDiv.textContent = `✅ 헬스체크 성공!\n\n상태: ${data.status}\n메시지: ${data.message}\n시간: ${data.timestamp}\n환경: ${data.environment}`;
+        showApiResult(`✅ API 테스트 성공!\n\n상태: ${data.status}\n메시지: ${data.message}\n시간: ${data.timestamp}\n환경: ${data.environment}`, 'success');
       } else {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ 헬스체크 실패\n상태: ${response.status}\n오류: ${JSON.stringify(data, null, 2)}`;
+        showApiResult(`❌ API 테스트 실패\n상태: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
       }
     } catch (error) {
-      resultDiv.style.background = '#f8d7da';
-      resultDiv.style.color = '#721c24';
-      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
     }
-  };
+  }
 
-  window.testPresign = async function() {
-    const resultDiv = document.getElementById('apiTestResult');
-    resultDiv.style.display = 'block';
-    resultDiv.style.background = '#fff3cd';
-    resultDiv.style.color = '#856404';
-    resultDiv.textContent = 'Presign API 테스트 중...';
-
+  async function testPresign() {
+    showApiResult('S3 Presign API 테스트 중...', 'info');
+    
     try {
       const response = await fetch('/api/presign-put', {
         method: 'POST',
@@ -453,67 +441,40 @@
         })
       });
 
-      const contentType = response.headers.get('content-type');
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
-        return;
-      }
-
       const data = await response.json();
       
       if (response.ok && data.ok) {
-        resultDiv.style.background = '#d4edda';
-        resultDiv.style.color = '#155724';
-        resultDiv.textContent = `✅ Presign API 성공!\n\nURL: ${data.url ? '생성됨' : '누락'}\nKey: ${data.key || 'N/A'}\nPublic URL: ${data.publicUrl || 'N/A'}\n메시지: ${data.message || 'N/A'}`;
+        showApiResult(`✅ S3 Presign API 성공!\n\nURL: ${data.url ? '생성됨' : '누락'}\nKey: ${data.key || 'N/A'}\nPublic URL: ${data.publicUrl || 'N/A'}`, 'success');
       } else {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ Presign API 실패\n상태: ${response.status}\n오류: ${data.error || 'Unknown'}\n상세: ${data.detail || 'N/A'}\n메시지: ${data.message || 'N/A'}`;
+        showApiResult(`❌ S3 Presign API 실패\n상태: ${response.status}\n오류: ${data.error || 'Unknown'}`, 'error');
       }
     } catch (error) {
-      resultDiv.style.background = '#f8d7da';
-      resultDiv.style.color = '#721c24';
-      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
     }
-  };
+  }
 
-  window.checkEnvironment = async function() {
-    const resultDiv = document.getElementById('apiTestResult');
-    resultDiv.style.display = 'block';
-    resultDiv.style.background = '#fff3cd';
-    resultDiv.style.color = '#856404';
-    resultDiv.textContent = '환경 변수 확인 중...';
-
+  async function checkEnvironment() {
+    showApiResult('환경 변수 확인 중...', 'info');
+    
     try {
       const response = await fetch('/api/debug-env');
-      const contentType = response.headers.get('content-type');
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ Non-JSON 응답\n상태: ${response.status}\nContent-Type: ${contentType}\n응답: ${await response.text()}`;
-        return;
-      }
-
       const data = await response.json();
       
       if (data.success) {
-        resultDiv.style.background = '#d4edda';
-        resultDiv.style.color = '#155724';
-        resultDiv.textContent = `✅ 환경 변수 확인 성공!\n\n${Object.entries(data.environment).map(([key, value]) => `${key}: ${value}`).join('\n')}\n\nAWS SDK: ${data.awsTest}`;
+        const envInfo = Object.entries(data.environment).map(([key, value]) => `${key}: ${value}`).join('\n');
+        showApiResult(`✅ 환경 변수 확인 성공!\n\n${envInfo}\n\nAWS SDK: ${data.awsTest}`, 'success');
       } else {
-        resultDiv.style.background = '#f8d7da';
-        resultDiv.style.color = '#721c24';
-        resultDiv.textContent = `❌ 환경 변수 확인 실패\n${data.error}`;
+        showApiResult(`❌ 환경 변수 확인 실패\n${data.error}`, 'error');
       }
     } catch (error) {
-      resultDiv.style.background = '#f8d7da';
-      resultDiv.style.color = '#721c24';
-      resultDiv.textContent = `❌ 네트워크 오류\n${error.message}`;
+      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
     }
-  };
+  }
+
+  function showApiResult(message, type) {
+    $apiTestResult.style.display = 'block';
+    $apiTestResult.textContent = message;
+    $apiTestResult.className = `api-result ${type}`;
+  }
 
 })();
