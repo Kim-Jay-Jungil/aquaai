@@ -60,6 +60,12 @@ document.addEventListener('DOMContentLoaded', function() {
       notionTestBtn.addEventListener('click', testNotion);
     }
 
+    // Notion 환경변수 확인
+    const notionEnvBtn = document.getElementById('notionEnvBtn');
+    if (notionEnvBtn) {
+      notionEnvBtn.addEventListener('click', checkNotionEnv);
+    }
+
     // 환경변수 확인
     const envCheckBtn = document.getElementById('envCheckBtn');
     if (envCheckBtn) {
@@ -571,6 +577,17 @@ document.addEventListener('DOMContentLoaded', function() {
       showAPITestResult('Notion 테스트', response.status, data);
     } catch (error) {
       showAPITestResult('Notion 테스트', 0, { error: error.message });
+    }
+  }
+
+  // Notion 환경변수 확인
+  async function checkNotionEnv() {
+    try {
+      const response = await fetch('/api/check-notion-env');
+      const data = await response.json();
+      showAPITestResult('Notion 환경변수', response.status, data);
+    } catch (error) {
+      showAPITestResult('Notion 환경변수', 0, { error: error.message });
     }
   }
 
