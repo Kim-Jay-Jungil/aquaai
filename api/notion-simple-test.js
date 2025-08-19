@@ -35,14 +35,16 @@ export default async function handler(req, res) {
     }
     
     // 3. API 키 유효성 테스트 (간단한 사용자 정보 조회)
+    let userInfo = null;
     try {
       console.log('🔍 API 키 유효성 테스트 시작');
       const user = await notionClient.users.me();
-      console.log('✅ API 키 유효성 확인 성공:', {
-        userId: user.id,
+      userInfo = {
+        id: user.id,
         name: user.name,
         type: user.type
-      });
+      };
+      console.log('✅ API 키 유효성 확인 성공:', userInfo);
     } catch (userError) {
       console.error('❌ API 키 유효성 테스트 실패:', userError);
       return res.status(401).json({
@@ -59,24 +61,20 @@ export default async function handler(req, res) {
       const database = await notionClient.databases.retrieve({ 
         database_id: process.env.NOTION_DB_SUBMISSIONS 
       });
-      console.log('✅ 데이터베이스 접근 성공:', {
+      
+      const databaseInfo = {
         id: database.id,
         title: database.title?.[0]?.plain_text || 'Untitled',
         properties: Object.keys(database.properties || {})
-      });
+      };
+      
+      console.log('✅ 데이터베이스 접근 성공:', databaseInfo);
       
       return res.status(200).json({
         ok: true,
         message: 'Notion 간단 테스트 성공',
-        user: {
-          id: user.id,
-          name: user.name
-        },
-        database: {
-          id: database.id,
-          title: database.title?.[0]?.plain_text || 'Untitled',
-          properties: Object.keys(database.properties || {})
-        }
+        user: userInfo,
+        database: databaseInfo
       });
       
     } catch (dbError) {
