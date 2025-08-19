@@ -48,41 +48,41 @@ export async function logSubmissionToNotion(payload) {
         name: status // Pending, Processing, Completed, Failed
       } 
     },
-    Upload_Time: { date: { start: new Date().toISOString() } }
+    "Upload Time": { date: { start: new Date().toISOString() } }
   };
 
   // 사용자 이메일
   if (email) {
-    properties.User_Email = { email };
+    properties["User Email"] = { email };
   }
 
   // 원본 이미지 링크
   if (original_url) {
-    properties.Original_Image = {
+    properties["Original Image"] = {
       files: [{ name: filename || "original", external: { url: original_url } }]
     };
   }
 
   // 보정된 이미지 링크
   if (output_url) {
-    properties.Enhanced_Image = {
+    properties["Enhanced Image"] = {
       files: [{ name: `${filename}_enhanced` || "enhanced", external: { url: output_url } }]
     };
   }
 
   // 파일 크기 (MB)
   if (file_size) {
-    properties.File_Size = { number: file_size };
+    properties["File Size"] = { number: file_size };
   }
 
   // 처리 시간 (초)
   if (processing_time) {
-    properties.Processing_Time = { number: processing_time / 1000 }; // 밀리초를 초로 변환
+    properties["Processing Time"] = { number: processing_time / 1000 }; // 밀리초를 초로 변환
   }
 
   // IP 주소
   if (ip_address) {
-    properties.IP_Address = { rich_text: [{ text: { content: ip_address } }] };
+    properties["IP Address"] = { rich_text: [{ text: { content: ip_address } }] };
   }
 
   // 추가 노트
@@ -91,8 +91,8 @@ export async function logSubmissionToNotion(payload) {
   }
 
   // 기본값 설정
-  properties.Customer_Satisfaction = { select: { name: "Neutral" } };
-  properties.Follow_up_Required = { checkbox: false };
+  properties["Customer Satisfaction"] = { select: { name: "Neutral" } };
+  properties["Follow-up Required"] = { checkbox: false };
 
   console.log('📝 Notion에 전송할 속성들:', properties);
 
@@ -122,17 +122,17 @@ export async function getUserMonthlyUsage(email, year, month) {
     filter: {
       and: [
         {
-          property: 'User_Email',
+          property: 'User Email',
           email: { equals: email }
         },
         {
-          property: 'Upload_Time',
+          property: 'Upload Time',
           date: {
             on_or_after: startDate
           }
         },
         {
-          property: 'Upload_Time',
+          property: 'Upload Time',
           date: {
             on_or_before: endDate
           }
@@ -180,13 +180,13 @@ export async function getServiceStats() {
     filter: {
       and: [
         {
-          property: 'Upload_Time',
+          property: 'Upload Time',
           date: {
             on_or_after: startDate
           }
         },
         {
-          property: 'Upload_Time',
+          property: 'Upload Time',
           date: {
             on_or_before: endDate
           }
@@ -203,7 +203,7 @@ export async function getServiceStats() {
 
   response.results.forEach(page => {
     const status = page.properties.Status?.select?.name || 'unknown';
-    const satisfaction = page.properties.Customer_Satisfaction?.select?.name || 'unknown';
+    const satisfaction = page.properties["Customer Satisfaction"]?.select?.name || 'unknown';
 
     stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
     stats.bySatisfaction[satisfaction] = (stats.bySatisfaction[satisfaction] || 0) + 1;
