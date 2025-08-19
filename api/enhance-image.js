@@ -41,6 +41,20 @@ export default async function handler(req, res) {
 
     console.log(`Starting image enhancement process for: ${filename || 'unknown'}`);
 
+    // 파일 크기 계산 (URL에서 이미지 크기 추정)
+    let fileSize = 0;
+    try {
+      // 이미지 URL에서 파일 크기 정보 추출 시도
+      const response = await fetch(imageUrl, { method: 'HEAD' });
+      const contentLength = response.headers.get('content-length');
+      if (contentLength) {
+        fileSize = Math.round(parseInt(contentLength) / (1024 * 1024) * 100) / 100; // MB로 변환
+      }
+    } catch (sizeError) {
+      console.log('📏 파일 크기 계산 실패, 기본값 사용:', sizeError.message);
+      fileSize = 0;
+    }
+
     // 이미지 보정 처리
     const startTime = Date.now();
     const enhancedImageUrl = await enhanceUnderwaterImage(imageUrl, enhancementLevel);
@@ -55,8 +69,7 @@ export default async function handler(req, res) {
       // 환경변수 상태 확인
       console.log('🔍 Notion 환경변수 상태:', {
         NOTION_API_KEY: process.env.NOTION_API_KEY ? '설정됨' : '설정되지 않음',
-        NOTION_DB_SUBMISSIONS: process.env.NOTION_DB_SUBMISSIONS ? '설정됨' : '설정되지 않음',
-        NOTION_WORKSPACE_ID: process.env.NOTION_WORKSPACE_ID ? '설정됨' : '설정되지 않음'
+        NOTION_DB_SUBMISSIONS: process.env.NOTION_DB_SUBMISSIONS ? '설정됨' : '설정되지 않음'
       });
       
       console.log('📋 기록할 데이터:', {
@@ -64,11 +77,10 @@ export default async function handler(req, res) {
         email: email || 'anonymous@example.com',
         original_url: imageUrl,
         output_url: enhancedImageUrl,
-        status: 'enhanced',
-        enhancement_level: enhancementLevel,
+        status: 'Completed',
         processing_time: processingTime,
-        notes: `Enhanced with ${enhancementLevel} level in ${processingTime}ms`,
-        user_tier: 'free' // 기본값
+        file_size: fileSize,
+        notes: `Enhanced with ${enhancementLevel} level in ${processingTime}ms`
       });
       
       const notionResult = await logSubmissionToNotion({
@@ -76,11 +88,11 @@ export default async function handler(req, res) {
         email: email || 'anonymous@example.com',
         original_url: imageUrl,
         output_url: enhancedImageUrl,
-        status: 'enhanced',
-        enhancement_level: enhancementLevel,
-        processing_time: processingTime,
+        status: 'Completed',
         notes: `Enhanced with ${enhancementLevel} level in ${processingTime}ms`,
-        user_tier: 'free' // 기본값
+        processing_time: processingTime,
+        file_size: fileSize || 0,
+        ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || 'unknown'
       });
 
       console.log('✅ Notion DB 기록 성공:', notionResult.id);

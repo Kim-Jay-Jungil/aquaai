@@ -33,36 +33,25 @@ export async function logSubmissionToNotion(payload) {
     email,
     original_url,
     output_url,
-    status = 'uploaded',
-    enhancement_level = 'auto',
+    status = 'Pending',
     notes,
-    user_tier = 'free',
     processing_time,
-    image_quality
+    file_size,
+    ip_address
   } = payload;
 
-  // 수중 사진 보정 서비스용 데이터베이스 구조
+  // 새로운 데이터베이스 구조에 맞는 속성들
   const properties = {
-    Name: { title: [{ text: { content: filename || "Untitled" } }] },
+    Title: { title: [{ text: { content: filename || "Untitled" } }] },
     Status: { 
       select: { 
-        name: status // uploaded, processing, enhanced, failed
+        name: status // Pending, Processing, Completed, Failed
       } 
     },
-    Enhancement_Level: { 
-      select: { 
-        name: enhancement_level // auto, light, medium, strong
-      } 
-    },
-    User_Tier: { 
-      select: { 
-        name: user_tier // free, pro, business
-      } 
-    },
-    Created_At: { date: { start: new Date().toISOString() } }
+    Upload_Time: { date: { start: new Date().toISOString() } }
   };
 
-  // 사용자 이메일 (로그인한 경우)
+  // 사용자 이메일
   if (email) {
     properties.User_Email = { email };
   }
@@ -81,14 +70,19 @@ export async function logSubmissionToNotion(payload) {
     };
   }
 
-  // 처리 시간 (밀리초)
-  if (processing_time) {
-    properties.Processing_Time = { number: processing_time };
+  // 파일 크기 (MB)
+  if (file_size) {
+    properties.File_Size = { number: file_size };
   }
 
-  // 이미지 품질 정보
-  if (image_quality) {
-    properties.Image_Quality = { rich_text: [{ text: { content: JSON.stringify(image_quality) } }] };
+  // 처리 시간 (초)
+  if (processing_time) {
+    properties.Processing_Time = { number: processing_time / 1000 }; // 밀리초를 초로 변환
+  }
+
+  // IP 주소
+  if (ip_address) {
+    properties.IP_Address = { rich_text: [{ text: { content: ip_address } }] };
   }
 
   // 추가 노트
@@ -96,15 +90,24 @@ export async function logSubmissionToNotion(payload) {
     properties.Notes = { rich_text: [{ text: { content: notes } }] };
   }
 
-  // 사용량 추적 (무료 티어 제한 관리용)
-  if (email) {
-    properties.Usage_Date = { date: { start: new Date().toISOString() } };
-  }
+  // 기본값 설정
+  properties.Customer_Satisfaction = { select: { name: "Neutral" } };
+  properties.Follow_up_Required = { checkbox: false };
 
-  return await notion.pages.create({
-    parent: { database_id: DB },
-    properties
-  });
+  console.log('📝 Notion에 전송할 속성들:', properties);
+
+  try {
+    const result = await notion.pages.create({
+      parent: { database_id: DB },
+      properties
+    });
+    
+    console.log('✅ Notion 페이지 생성 성공:', result.id);
+    return result;
+  } catch (error) {
+    console.error('❌ Notion 페이지 생성 실패:', error);
+    throw error;
+  }
 }
 
 // 사용자별 월간 사용량 조회
@@ -123,13 +126,13 @@ export async function getUserMonthlyUsage(email, year, month) {
           email: { equals: email }
         },
         {
-          property: 'Created_At',
+          property: 'Upload_Time',
           date: {
             on_or_after: startDate
           }
         },
         {
-          property: 'Created_At',
+          property: 'Upload_Time',
           date: {
             on_or_before: endDate
           }
@@ -177,13 +180,13 @@ export async function getServiceStats() {
     filter: {
       and: [
         {
-          property: 'Created_At',
+          property: 'Upload_Time',
           date: {
             on_or_after: startDate
           }
         },
         {
-          property: 'Created_At',
+          property: 'Upload_Time',
           date: {
             on_or_before: endDate
           }
@@ -195,18 +198,15 @@ export async function getServiceStats() {
   const stats = {
     totalProcessed: response.results.length,
     byStatus: {},
-    byTier: {},
-    byEnhancementLevel: {}
+    bySatisfaction: {}
   };
 
   response.results.forEach(page => {
     const status = page.properties.Status?.select?.name || 'unknown';
-    const tier = page.properties.User_Tier?.select?.name || 'unknown';
-    const level = page.properties.Enhancement_Level?.select?.name || 'unknown';
+    const satisfaction = page.properties.Customer_Satisfaction?.select?.name || 'unknown';
 
     stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
-    stats.byTier[tier] = (stats.byTier[tier] || 0) + 1;
-    stats.byEnhancementLevel[level] = (stats.byEnhancementLevel[level] || 0) + 1;
+    stats.bySatisfaction[satisfaction] = (stats.bySatisfaction[satisfaction] || 0) + 1;
   });
 
   return stats;
