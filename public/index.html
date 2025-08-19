@@ -52,6 +52,7 @@
           <button id="notionTestBtn" class="btn btn-outline" style="margin-right: 10px;">Notion 테스트</button>
           <button id="notionConnBtn" class="btn btn-outline" style="margin-right: 10px;">Notion 연결</button>
           <button id="simpleNotionBtn" class="btn btn-outline" style="margin-right: 10px;">간단 Notion</button>
+          <button id="notionSimpleTestBtn" class="btn btn-outline" style="margin-right: 10px;">Notion 간단</button>
           <button id="basicTestBtn" class="btn btn-outline" style="margin-right: 10px;">기본 테스트</button>
           <button id="echoTestBtn" class="btn btn-outline" style="margin-right: 10px;">Echo 테스트</button>
           <button id="notionEnvBtn" class="btn btn-outline" style="margin-right: 10px;">Notion 환경변수</button>
@@ -709,6 +710,28 @@
         });
       } else {
         console.error('❌ 인라인 스크립트: 간단 Notion 버튼을 찾을 수 없음');
+      }
+      
+      // Notion 간단 테스트 버튼 찾기
+      const notionSimpleTestBtn = document.getElementById('notionSimpleTestBtn');
+      if (notionSimpleTestBtn) {
+        console.log('✅ 인라인 스크립트: Notion 간단 테스트 버튼 발견');
+        
+        // 인라인으로 이벤트 리스너 추가
+        notionSimpleTestBtn.addEventListener('click', async function() {
+          console.log('🧪 인라인 스크립트: Notion 간단 테스트 버튼 클릭됨');
+          try {
+            const response = await fetch('/api/notion-simple-test');
+            const data = await response.json();
+            console.log('📡 인라인 스크립트: 응답 데이터:', data);
+            alert(`Notion 간단 테스트 성공!\n상태: ${response.status}\n응답: ${JSON.stringify(data, null, 2)}`);
+          } catch (error) {
+            console.error('❌ 인라인 스크립트: 오류:', error);
+            alert(`Notion 간단 테스트 실패!\n오류: ${error.message}`);
+          }
+        });
+      } else {
+        console.error('❌ 인라인 스크립트: Notion 간단 테스트 버튼을 찾을 수 없음');
       }
       
       // Echo 테스트 버튼 찾기

@@ -13,7 +13,8 @@ export default async function handler(req, res) {
       hasApiKey: Boolean(apiKey),
       apiKeyLength: apiKey ? apiKey.length : 0,
       hasDbId: Boolean(dbId),
-      dbIdLength: dbId ? dbId.length : 0
+      dbIdLength: dbId ? dbId.length : 0,
+      dbIdValue: dbId // 실제 값 확인
     });
     
     if (!apiKey) {
@@ -36,6 +37,7 @@ export default async function handler(req, res) {
     
     // 데이터베이스 정보 조회 시도
     try {
+      console.log('🔍 데이터베이스 조회 시도:', { database_id: dbId });
       const database = await notion.databases.retrieve({ database_id: dbId });
       console.log('✅ 데이터베이스 연결 성공:', {
         id: database.id,
