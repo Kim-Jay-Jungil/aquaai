@@ -12,8 +12,17 @@ document.addEventListener('DOMContentLoaded', function() {
   const resultsContainer = document.getElementById('resultsContainer');
   const statusMessage = document.getElementById('statusMessage');
 
-  // 상태 변수
+  // API 테스트 관련 요소들
+  const $simpleApiBtn = document.getElementById('simpleApiBtn');
+  const $apiTestBtn = document.getElementById('apiTestBtn');
+  const $s3TestBtn = document.getElementById('s3TestBtn');
+  const $notionTestBtn = document.getElementById('notionTestBtn');
+  const $envCheckBtn = document.getElementById('envCheckBtn');
+  const $apiTestResult = document.getElementById('apiTestResult');
+  
+  // 상태 변수들
   let selectedFiles = [];
+  let selectedEnhancementLevel = 'auto';
   let isProcessing = false;
 
   // 초기화
@@ -717,12 +726,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function checkEnvironment() {
+    showApiResult('환경 변수 확인 중...', 'info');
+    
     try {
-      const response = await fetch('/api/whoami');
+      const response = await fetch('/api/debug-env');
       const data = await response.json();
-      showAPITestResult('환경변수 확인', response.status, data);
+      
+      if (data.success) {
+        const envInfo = Object.entries(data.environment).map(([key, value]) => `${key}: ${value}`).join('\n');
+        showApiResult(`✅ 환경 변수 확인 성공!\n\n${envInfo}\n\nAWS SDK: ${data.awsTest}`, 'success');
+      } else {
+        showApiResult(`❌ 환경 변수 확인 실패\n${data.error}`, 'error');
+      }
     } catch (error) {
-      showAPITestResult('환경변수 확인', 0, { error: error.message });
+      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
     }
   }
 
@@ -838,6 +855,12 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
       resultDiv.remove();
     }, 5000);
+  }
+
+  function showApiResult(message, type) {
+    $apiTestResult.style.display = 'block';
+    $apiTestResult.textContent = message;
+    $apiTestResult.className = `api-result ${type}`;
   }
 
   // 이미지 비교 슬라이더 기능
