@@ -436,7 +436,9 @@ document.addEventListener('DOMContentLoaded', function() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           imageUrl,
-          filename
+          filename,
+          email: $userEmail.value || 'anonymous@example.com',
+          enhancementLevel: selectedEnhancementLevel
         })
       });
 

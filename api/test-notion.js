@@ -23,20 +23,20 @@ export default async function handler(req, res) {
     console.log('Testing Notion API connection...');
 
     // 환경 변수 확인
-    const notionToken = process.env.NOTION_TOKEN;
-    const notionDbId = process.env.NOTION_DB_ID;
+    const notionToken = process.env.NOTION_API_KEY;
+    const notionDbId = process.env.NOTION_DB_SUBMISSIONS;
 
     if (!notionToken) {
       return res.status(500).json({
         success: false,
-        error: 'NOTION_TOKEN environment variable is not set'
+        error: 'NOTION_API_KEY environment variable is not set'
       });
     }
 
     if (!notionDbId) {
       return res.status(500).json({
         success: false,
-        error: 'NOTION_DB_ID environment variable is not set'
+        error: 'NOTION_DB_SUBMISSIONS environment variable is not set'
       });
     }
 
