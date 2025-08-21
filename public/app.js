@@ -289,12 +289,26 @@ document.addEventListener('DOMContentLoaded', function() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // 향상 버튼 업데이트
+  // 보정 버튼 상태 업데이트
   function updateEnhanceButton() {
     if (!enhanceButton) return;
     
-    enhanceButton.disabled = selectedFiles.length === 0 || isProcessing;
-    enhanceButton.textContent = isProcessing ? '처리 중...' : '이미지 보정 시작';
+    if (isProcessing) {
+      enhanceButton.disabled = true;
+      enhanceButton.textContent = '처리 중...';
+      enhanceButton.classList.add('processing');
+    } else {
+      enhanceButton.disabled = selectedFiles.length === 0;
+      enhanceButton.textContent = '이미지 보정 시작';
+      enhanceButton.classList.remove('processing');
+    }
+    
+    console.log('🔘 보정 버튼 상태 업데이트:', {
+      isProcessing,
+      hasFiles: selectedFiles.length > 0,
+      disabled: enhanceButton.disabled,
+      text: enhanceButton.textContent
+    });
   }
 
   // 진행률 바 표시/숨김
@@ -316,14 +330,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 이미지 보정 시작
   async function startEnhancement() {
-    if (selectedFiles.length === 0 || isProcessing) return;
+    if (selectedFiles.length === 0 || isProcessing) {
+      console.log('🚫 이미지 보정 시작 차단:', { 
+        hasFiles: selectedFiles.length > 0, 
+        isProcessing 
+      });
+      return;
+    }
+    
+    console.log('🚀 이미지 보정 시작:', selectedFiles.length, '개 파일');
+    
+    // 중복 실행 방지
+    if (isProcessing) {
+      console.log('⚠️ 이미 처리 중입니다. 중복 실행 방지');
+      return;
+    }
     
     isProcessing = true;
     updateEnhanceButton();
     showProgressBar();
     clearResults();
-    
-    console.log('🚀 이미지 보정 시작:', selectedFiles.length, '개 파일');
     
     try {
       const results = [];
@@ -337,10 +363,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
           // 1단계: S3 업로드 (직접 업로드만 사용)
+          console.log(`🔄 S3 업로드 시작: ${file.name}`);
           const uploadResult = await uploadToS3(file);
           console.log('✅ S3 업로드 성공:', uploadResult);
           
           // 2단계: 이미지 향상
+          console.log(`🔄 이미지 향상 시작: ${file.name}`);
           const enhanceResult = await enhanceImage(uploadResult.publicUrl, file.name);
           console.log('✅ 이미지 향상 성공:', enhanceResult);
           
@@ -349,7 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
             originalUrl: uploadResult.publicUrl,
             enhancedUrl: enhanceResult.enhancedUrl,
             success: true,
-            error: null
+            error: null,
+            processingTime: enhanceResult.processingTime,
+            enhancementLevel: selectedEnhancementLevel,
+            notionLogged: enhanceResult.notionLogged || false
           });
           
         } catch (error) {
@@ -370,6 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('💥 전체 처리 실패:', error);
       showError('이미지 보정 중 오류가 발생했습니다: ' + error.message);
     } finally {
+      console.log('🏁 이미지 보정 완료, 상태 초기화');
       isProcessing = false;
       updateEnhanceButton();
       hideProgressBar();
@@ -976,6 +1008,167 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 슬라이더 초기화
   initImageComparisonSlider();
+
+  // 보정 강도 슬라이더 및 AUTO 토글 관리
+  const $enhancementSlider = document.getElementById('enhancementSlider');
+  const $autoToggle = document.getElementById('autoToggle');
+  
+  // 슬라이더와 AUTO 토글 연동
+  if ($enhancementSlider && $autoToggle) {
+    $enhancementSlider.addEventListener('input', function() {
+      if (this.value !== '50') {
+        $autoToggle.checked = false;
+      }
+      selectedEnhancementLevel = getEnhancementLevel(this.value);
+      console.log('🔧 보정 강도 변경:', selectedEnhancementLevel);
+    });
+    
+    $autoToggle.addEventListener('change', function() {
+      if (this.checked) {
+        $enhancementSlider.value = '50';
+        selectedEnhancementLevel = 'auto';
+        console.log('🔄 AUTO 모드 활성화');
+      }
+    });
+  }
+  
+  // 보정 강도 수치를 레벨로 변환
+  function getEnhancementLevel(value) {
+    const numValue = parseInt(value);
+    if (numValue <= 25) return 'light';
+    if (numValue <= 50) return 'auto';
+    if (numValue <= 75) return 'medium';
+    return 'strong';
+  }
+  
+  // 샘플 이미지 로드
+  window.loadSampleImages = function() {
+    console.log('🎨 샘플 이미지 로드 시작');
+    
+    // 샘플 이미지 데이터 (실제로는 서버에서 가져와야 함)
+    const sampleImages = [
+      { name: 'sample1.jpg', before: '/sample-before-1.jpg', after: '/sample-after-1.jpg' },
+      { name: 'sample2.jpg', before: '/sample-before-2.jpg', after: '/sample-after-2.jpg' },
+      { name: 'sample3.jpg', before: '/sample-before-3.jpg', after: '/sample-after-3.jpg' }
+    ];
+    
+    // 첫 번째 샘플 이미지로 Hero 슬라이더 업데이트
+    if (sampleImages.length > 0) {
+      const firstSample = sampleImages[0];
+      const $heroBeforeImg = document.getElementById('heroBeforeImg');
+      const $heroAfterImg = document.getElementById('heroAfterImg');
+      
+      if ($heroBeforeImg && $heroAfterImg) {
+        $heroBeforeImg.src = firstSample.before;
+        $heroAfterImg.src = firstSample.after;
+        console.log('✅ Hero 샘플 이미지 업데이트 완료');
+      }
+    }
+    
+    // 샘플 이미지 업로드 시뮬레이션
+    simulateSampleUpload();
+  };
+  
+  // 샘플 업로드 시뮬레이션
+  function simulateSampleUpload() {
+    console.log('🎭 샘플 업로드 시뮬레이션 시작');
+    
+    // 가상 파일 객체 생성
+    const sampleFile = new File(['sample'], 'sample-image.jpg', { type: 'image/jpeg' });
+    
+    // 파일 선택 상태로 설정
+    selectedFiles = [sampleFile];
+    updateFileDisplay();
+    updateEnhanceButton();
+    
+    console.log('✅ 샘플 파일 설정 완료');
+  }
+  
+  // Hero 슬라이더 초기화
+  function initHeroSlider() {
+    const $slider = document.getElementById('heroComparisonSlider');
+    if (!$slider) return;
+    
+    let isDragging = false;
+    let startX = 0;
+    let startLeft = 0;
+    
+    const $handle = document.getElementById('heroHandle');
+    const $after = $slider.querySelector('.comparison-after');
+    
+    if (!$handle || !$after) return;
+    
+    // 마우스/터치 이벤트
+    $slider.addEventListener('mousedown', startDrag);
+    $slider.addEventListener('touchstart', startDrag);
+    
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+    
+    // 키보드 접근성
+    $slider.addEventListener('keydown', function(e) {
+      const step = e.shiftKey ? 10 : 2;
+      let currentLeft = parseFloat($after.style.clipPath?.match(/inset\(0 0 0 ([\d.]+)%\)/)?.[1] || 50);
+      
+      if (e.key === 'ArrowLeft') currentLeft = Math.min(100, currentLeft + step);
+      if (e.key === 'ArrowRight') currentLeft = Math.max(0, currentLeft - step);
+      if (e.key === 'Home') currentLeft = 0;
+      if (e.key === 'End') currentLeft = 100;
+      
+      updateSliderPosition(currentLeft);
+    });
+    
+    function startDrag(e) {
+      isDragging = true;
+      const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+      startX = clientX;
+      startLeft = parseFloat($after.style.clipPath?.match(/inset\(0 0 0 ([\d.]+)%\)/)?.[1] || 50);
+      e.preventDefault();
+    }
+    
+    function drag(e) {
+      if (!isDragging) return;
+      
+      const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+      const deltaX = clientX - startX;
+      const sliderWidth = $slider.offsetWidth;
+      const deltaPercent = (deltaX / sliderWidth) * 100;
+      const newLeft = Math.max(0, Math.min(100, startLeft - deltaPercent));
+      
+      updateSliderPosition(newLeft);
+      e.preventDefault();
+    }
+    
+    function stopDrag() {
+      isDragging = false;
+    }
+    
+    function updateSliderPosition(left) {
+      $after.style.clipPath = `inset(0 0 0 ${left}%)`;
+      $handle.style.left = `${left}%`;
+      
+      // ARIA 값 업데이트
+      $slider.setAttribute('aria-valuenow', Math.round(100 - left));
+    }
+    
+    // 초기 위치 설정
+    updateSliderPosition(50);
+  }
+  
+  // 페이지 스크롤 함수
+  window.scrollToUpload = function() {
+    const uploadSection = document.getElementById('uploadSection');
+    if (uploadSection) {
+      uploadSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
+  // 페이지 로드 시 Hero 슬라이더 초기화
+  document.addEventListener('DOMContentLoaded', function() {
+    initHeroSlider();
+  });
 
   console.log('🎉 Aqua.AI 앱 로딩 완료 (수정된 버전)!');
   console.log('💡 이제 presign API를 사용하지 않고 직접 업로드만 사용합니다!');
