@@ -17,8 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const $simpleApiBtn = document.getElementById('simpleApiBtn');
   const $apiTestBtn = document.getElementById('apiTestBtn');
   const $s3TestBtn = document.getElementById('s3TestBtn');
+  const $corsTestBtn = document.getElementById('corsTestBtn');
   const $notionTestBtn = document.getElementById('notionTestBtn');
   const $envCheckBtn = document.getElementById('envCheckBtn');
+  const $pingBtn = document.getElementById('pingBtn');
   const $apiTestResult = document.getElementById('apiTestResult');
   
   // 상태 변수들
@@ -81,28 +83,51 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function setupAPITestButtons() {
+    console.log('🔧 setupAPITestButtons 시작');
+    
+    // Ping 테스트
+    const pingBtn = document.getElementById('pingBtn');
+    if (pingBtn) {
+      pingBtn.addEventListener('click', testPing);
+      console.log('✅ Ping 테스트 버튼 이벤트 리스너 등록');
+    } else {
+      console.error('❌ Ping 테스트 버튼을 찾을 수 없음');
+    }
+
     // 간단 API 테스트
     const simpleTestBtn = document.getElementById('simpleTestBtn');
     if (simpleTestBtn) {
       simpleTestBtn.addEventListener('click', testSimpleAPI);
+      console.log('✅ 간단 API 테스트 버튼 이벤트 리스너 등록');
+    } else {
+      console.error('❌ 간단 API 테스트 버튼을 찾을 수 없음');
     }
 
     // API 테스트
     const apiTestBtn = document.getElementById('apiTestBtn');
     if (apiTestBtn) {
       apiTestBtn.addEventListener('click', testAPI);
+      console.log('✅ API 테스트 버튼 이벤트 리스너 등록');
+    } else {
+      console.error('❌ API 테스트 버튼을 찾을 수 없음');
     }
 
     // S3 테스트
     const s3TestBtn = document.getElementById('s3TestBtn');
     if (s3TestBtn) {
       s3TestBtn.addEventListener('click', testS3);
+      console.log('✅ S3 테스트 버튼 이벤트 리스너 등록');
+    } else {
+      console.error('❌ S3 테스트 버튼을 찾을 수 없음');
     }
 
     // CORS 테스트
     const corsTestBtn = document.getElementById('corsTestBtn');
     if (corsTestBtn) {
       corsTestBtn.addEventListener('click', testCORS);
+      console.log('✅ CORS 테스트 버튼 이벤트 리스너 등록');
+    } else {
+      console.error('❌ CORS 테스트 버튼을 찾을 수 없음');
     }
 
     // Notion 테스트
@@ -154,6 +179,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const envCheckBtn = document.getElementById('envCheckBtn');
     if (envCheckBtn) {
       envCheckBtn.addEventListener('click', checkEnvironment);
+      console.log('✅ 환경변수 확인 버튼 이벤트 리스너 등록');
+    } else {
+      console.error('❌ 환경변수 확인 버튼을 찾을 수 없음');
     }
 
     // 이미지 URL 테스트 (직접 업로드 사용)
@@ -185,6 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (s3CorsTestBtn) {
       s3CorsTestBtn.addEventListener('click', testS3Cors);
     }
+    console.log('🏁 setupAPITestButtons 완료');
   }
 
   // 파일 선택 처리
@@ -1415,6 +1444,25 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSliderPosition(50);
   }
 
+  // Ping 테스트 함수
+  async function testPing() {
+    showApiResult('Ping 테스트 중...', 'info');
+    
+    try {
+      const response = await fetch('/api/ping');
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        showApiResult(`✅ Ping 테스트 성공!\n\n메시지: ${data.message}\n시간: ${data.timestamp}\n메서드: ${data.method}\nURL: ${data.url}`, 'success');
+      } else {
+        showApiResult(`❌ Ping 테스트 실패\n상태: ${response.status}\n${JSON.stringify(data, null, 2)}`, 'error');
+      }
+    } catch (error) {
+      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
+    }
+  }
+
+  // 간단한 API 테스트
   console.log('🎉 Aqua.AI 앱 로딩 완료 (수정된 버전)!');
   console.log('💡 이제 presign API를 사용하지 않고 직접 업로드만 사용합니다!');
   console.log('🎨 이미지 비교 슬라이더가 추가되었습니다!');
