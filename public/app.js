@@ -7,11 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // DOM 요소들
   const fileInput = document.getElementById('fileInput');
   const uploadArea = document.getElementById('uploadArea');
-  const enhanceButton = document.getElementById('enhanceButton');
-  const progressBar = document.getElementById('progressBar');
+  const enhanceBtn = document.getElementById('enhanceBtn'); // ID 통일
   const resultsContainer = document.getElementById('resultsContainer');
-  const statusMessage = document.getElementById('statusMessage');
-
+  const progressBar = document.getElementById('progressBar');
+  const $optionButtons = document.querySelectorAll('.option-btn');
+  const $userEmail = document.getElementById('userEmail');
+  
   // API 테스트 관련 요소들
   const $simpleApiBtn = document.getElementById('simpleApiBtn');
   const $apiTestBtn = document.getElementById('apiTestBtn');
@@ -35,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🔍 DOM 요소 상태:', {
       fileInput: Boolean(fileInput),
       uploadArea: Boolean(uploadArea),
-      enhanceButton: Boolean(enhanceButton)
+      enhanceButton: Boolean(enhanceBtn)
     });
     
     // 이벤트 리스너 등록
@@ -60,13 +61,14 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       uploadArea.addEventListener('dragover', handleDragOver);
       uploadArea.addEventListener('drop', handleDrop);
+      uploadArea.addEventListener('dragleave', handleDragLeave); // 드래그 리브 이벤트 추가
     } else {
       console.error('❌ uploadArea를 찾을 수 없음');
     }
     
-    if (enhanceButton) {
+    if (enhanceBtn) {
       console.log('✅ enhanceButton 이벤트 리스너 등록');
-      enhanceButton.addEventListener('click', startEnhancement);
+      enhanceBtn.addEventListener('click', startEnhancement);
     } else {
       console.error('❌ enhanceButton을 찾을 수 없음');
     }
@@ -182,29 +184,40 @@ document.addEventListener('DOMContentLoaded', function() {
   // 파일 선택 처리
   function handleFileSelect(event) {
     const files = Array.from(event.target.files);
-    console.log('📁 선택된 파일들:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+    console.log('📁 파일 선택됨:', files.length, '개');
     
-    selectedFiles = files.filter(file => validateFile(file).isValid);
-    updateUploadArea();
-    updateEnhanceButton();
+    selectedFiles = files;
+    updateFileDisplay();
+    updateEnhanceButton(); // 버튼 상태 업데이트 추가
+    
+    console.log('✅ 파일 선택 처리 완료, 선택된 파일:', selectedFiles.length, '개');
   }
-
-  // 드래그 앤 드롭 처리
+  
+  // 드래그 오버 처리
   function handleDragOver(event) {
     event.preventDefault();
     uploadArea.classList.add('drag-over');
   }
-
+  
+  // 드래그 앤 드롭 처리
   function handleDrop(event) {
     event.preventDefault();
     uploadArea.classList.remove('drag-over');
     
     const files = Array.from(event.dataTransfer.files);
-    console.log('📁 드롭된 파일들:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+    console.log('📁 드래그 앤 드롭 파일:', files.length, '개');
     
-    selectedFiles = files.filter(file => validateFile(file).isValid);
-    updateUploadArea();
-    updateEnhanceButton();
+    selectedFiles = files;
+    updateFileDisplay();
+    updateEnhanceButton(); // 버튼 상태 업데이트 추가
+    
+    console.log('✅ 드래그 앤 드롭 처리 완료, 선택된 파일:', selectedFiles.length, '개');
+  }
+  
+  // 드래그 리브 처리
+  function handleDragLeave(event) {
+    event.preventDefault();
+    uploadArea.classList.remove('drag-over');
   }
 
   // 파일 검증
@@ -242,44 +255,85 @@ document.addEventListener('DOMContentLoaded', function() {
       .replace(/^_|_$/g, '');
   }
 
-  // 업로드 영역 업데이트
-  function updateUploadArea() {
+  // 파일 표시 업데이트
+  function updateFileDisplay() {
     if (!uploadArea) return;
     
     if (selectedFiles.length === 0) {
       uploadArea.innerHTML = `
-        <div class="upload-placeholder">
-          <div class="upload-icon">📁</div>
-          <div class="upload-text">
-            <strong>파일을 선택하거나 드래그하세요</strong><br>
-            <small>이미지 파일만 지원 (최대 10MB)</small>
+        <div class="upload-content">
+          <div class="upload-icon">📸</div>
+          <h3 class="upload-title">사진을 끌어다 놓거나 클릭해 선택</h3>
+          <p class="upload-help">JPG, PNG, HEIC 지원 · 최대 10MB</p>
+          <div class="upload-buttons">
+            <button class="btn btn--primary upload-btn" onclick="document.getElementById('fileInput').click()">
+              파일 선택
+            </button>
+            <button class="btn btn--tertiary demo-btn" onclick="loadSampleImages()">
+              샘플로 체험하기
+            </button>
           </div>
+          <input id="fileInput" type="file" accept="image/*" multiple style="display: none;" />
         </div>
       `;
-    } else {
-      const fileList = selectedFiles.map(file => `
-        <div class="file-preview-item">
-          <div class="file-preview-image">
-            <img src="${URL.createObjectURL(file)}" alt="${file.name}" class="preview-image">
-          </div>
-          <div class="file-info">
-            <span class="file-name">${file.name}</span>
-            <span class="file-size">${formatFileSize(file.size)}</span>
-          </div>
-        </div>
-      `).join('');
       
+      // 파일 입력 이벤트 리스너 다시 등록
+      const newFileInput = uploadArea.querySelector('#fileInput');
+      if (newFileInput) {
+        newFileInput.addEventListener('change', handleFileSelect);
+      }
+    } else {
       uploadArea.innerHTML = `
         <div class="selected-files">
           <h4>선택된 파일 (${selectedFiles.length}개)</h4>
           <div class="file-preview-grid">
-            ${fileList}
+            ${selectedFiles.map((file, index) => `
+              <div class="file-preview-item">
+                <div class="file-preview-image">
+                  <img src="${URL.createObjectURL(file)}" alt="${file.name}" />
+                </div>
+                <div class="file-info">
+                  <span class="file-name">${file.name}</span>
+                  <span class="file-size">${formatFileSize(file.size)}</span>
+                  <button class="remove-file" onclick="removeFile(${index})">×</button>
+                </div>
+              </div>
+            `).join('')}
           </div>
+          <div class="file-actions">
+            <button class="btn btn--tertiary" onclick="clearFiles()">모두 제거</button>
+            <button class="btn btn--primary" onclick="document.getElementById('fileInput').click()">
+              추가 파일 선택
+            </button>
+          </div>
+          <input id="fileInput" type="file" accept="image/*" multiple style="display: none;" />
         </div>
       `;
+      
+      // 파일 입력 이벤트 리스너 다시 등록
+      const newFileInput = uploadArea.querySelector('#fileInput');
+      if (newFileInput) {
+        newFileInput.addEventListener('change', handleFileSelect);
+      }
     }
   }
 
+  // 파일 제거
+  window.removeFile = function(index) {
+    console.log('🗑️ 파일 제거:', index);
+    selectedFiles.splice(index, 1);
+    updateFileDisplay();
+    updateEnhanceButton();
+  };
+  
+  // 모든 파일 제거
+  window.clearFiles = function() {
+    console.log('🗑️ 모든 파일 제거');
+    selectedFiles = [];
+    updateFileDisplay();
+    updateEnhanceButton();
+  };
+  
   // 파일 크기 포맷팅
   function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -291,23 +345,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 보정 버튼 상태 업데이트
   function updateEnhanceButton() {
-    if (!enhanceButton) return;
+    if (!enhanceBtn) return;
     
     if (isProcessing) {
-      enhanceButton.disabled = true;
-      enhanceButton.textContent = '처리 중...';
-      enhanceButton.classList.add('processing');
+      enhanceBtn.disabled = true;
+      enhanceBtn.textContent = '처리 중...';
+      enhanceBtn.classList.add('processing');
     } else {
-      enhanceButton.disabled = selectedFiles.length === 0;
-      enhanceButton.textContent = '이미지 보정 시작';
-      enhanceButton.classList.remove('processing');
+      // 파일이 있고 최소 하나의 필터가 선택되어야 활성화
+      const hasFiles = selectedFiles.length > 0;
+      const hasFilters = Object.values(selectedFilters).some(Boolean);
+      
+      enhanceBtn.disabled = !(hasFiles && hasFilters);
+      enhanceBtn.textContent = '보정 시작 (약 10초)';
+      enhanceBtn.classList.remove('processing');
     }
     
     console.log('🔘 보정 버튼 상태 업데이트:', {
       isProcessing,
       hasFiles: selectedFiles.length > 0,
-      disabled: enhanceButton.disabled,
-      text: enhanceButton.textContent
+      hasFilters: Object.values(selectedFilters).some(Boolean),
+      disabled: enhanceBtn.disabled,
+      text: enhanceBtn.textContent
     });
   }
 
@@ -470,7 +529,8 @@ document.addEventListener('DOMContentLoaded', function() {
           imageUrl,
           filename,
           email: $userEmail.value || 'anonymous@example.com',
-          enhancementLevel: selectedEnhancementLevel
+          enhancementLevel: selectedEnhancementLevel,
+          filters: selectedFilters // 선택된 필터 전달
         })
       });
 
@@ -1168,7 +1228,159 @@ document.addEventListener('DOMContentLoaded', function() {
   // 페이지 로드 시 Hero 슬라이더 초기화
   document.addEventListener('DOMContentLoaded', function() {
     initHeroSlider();
+    initFilterExampleSliders(); // 필터 예시 슬라이더 초기화 추가
+    
+    // 초기 버튼 상태 설정
+    updateEnhanceButton();
+    
+    console.log('🎉 페이지 로드 완료, 초기 상태 설정됨');
   });
+
+  // 필터 선택 관리
+  const $filterColor = document.getElementById('filterColor');
+  const $filterDebris = document.getElementById('filterDebris');
+  const $filterStabilize = document.getElementById('filterStabilize');
+  const $filterSuperRes = document.getElementById('filterSuperRes');
+  
+  // 선택된 필터들
+  let selectedFilters = {
+    color: true,      // 색상보정 (기본 선택)
+    debris: false,    // 부유물제거
+    stabilize: false, // 손떨림복원
+    superRes: false   // 슈퍼레졸루션
+  };
+  
+  // 필터 변경 이벤트 리스너
+  if ($filterColor) $filterColor.addEventListener('change', updateSelectedFilters);
+  if ($filterDebris) $filterDebris.addEventListener('change', updateSelectedFilters);
+  if ($filterStabilize) $filterStabilize.addEventListener('change', updateSelectedFilters);
+  if ($filterSuperRes) $filterSuperRes.addEventListener('change', updateSelectedFilters);
+  
+  // 선택된 필터 업데이트
+  function updateSelectedFilters() {
+    selectedFilters = {
+      color: $filterColor?.checked || false,
+      debris: $filterDebris?.checked || false,
+      stabilize: $filterStabilize?.checked || false,
+      superRes: $filterSuperRes?.checked || false
+    };
+    
+    console.log('🔧 선택된 필터:', selectedFilters);
+    
+    // 최소 하나의 필터는 선택되어야 함
+    if (!Object.values(selectedFilters).some(Boolean)) {
+      $filterColor.checked = true;
+      selectedFilters.color = true;
+      console.log('⚠️ 최소 하나의 필터는 선택되어야 합니다. 색상보정을 기본 선택합니다.');
+    }
+    
+    updateEnhanceButton();
+  }
+  
+  // 모든 필터 선택
+  window.selectAllFilters = function() {
+    if ($filterColor) $filterColor.checked = true;
+    if ($filterDebris) $filterDebris.checked = true;
+    if ($filterStabilize) $filterStabilize.checked = true;
+    if ($filterSuperRes) $filterSuperRes.checked = true;
+    updateSelectedFilters();
+  };
+  
+  // 모든 필터 해제
+  window.clearAllFilters = function() {
+    if ($filterColor) $filterColor.checked = false;
+    if ($filterDebris) $filterDebris.checked = false;
+    if ($filterStabilize) $filterStabilize.checked = false;
+    if ($filterSuperRes) $filterSuperRes.checked = false;
+    updateSelectedFilters();
+  };
+
+  // 필터 예시 슬라이더 초기화
+  function initFilterExampleSliders() {
+    const sliders = [
+      { id: 'colorComparisonSlider', handleId: 'colorHandle' },
+      { id: 'debrisComparisonSlider', handleId: 'debrisHandle' },
+      { id: 'stabilizeComparisonSlider', handleId: 'stabilizeHandle' },
+      { id: 'superResComparisonSlider', handleId: 'superResHandle' }
+    ];
+    
+    sliders.forEach(slider => {
+      initComparisonSlider(slider.id, slider.handleId);
+    });
+  }
+  
+  // 개별 슬라이더 초기화
+  function initComparisonSlider(sliderId, handleId) {
+    const $slider = document.getElementById(sliderId);
+    if (!$slider) return;
+    
+    const $handle = document.getElementById(handleId);
+    const $after = $slider.querySelector('.comparison-after');
+    
+    if (!$handle || !$after) return;
+    
+    let isDragging = false;
+    let startX = 0;
+    let startLeft = 0;
+    
+    // 마우스/터치 이벤트
+    $slider.addEventListener('mousedown', startDrag);
+    $slider.addEventListener('touchstart', startDrag);
+    
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+    
+    // 키보드 접근성
+    $slider.addEventListener('keydown', function(e) {
+      const step = e.shiftKey ? 10 : 2;
+      let currentLeft = parseFloat($after.style.clipPath?.match(/inset\(0 0 0 ([\d.]+)%\)/)?.[1] || 50);
+      
+      if (e.key === 'ArrowLeft') currentLeft = Math.min(100, currentLeft + step);
+      if (e.key === 'ArrowRight') currentLeft = Math.max(0, currentLeft - step);
+      if (e.key === 'Home') currentLeft = 0;
+      if (e.key === 'End') currentLeft = 100;
+      
+      updateSliderPosition(currentLeft);
+    });
+    
+    function startDrag(e) {
+      isDragging = true;
+      const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+      startX = clientX;
+      startLeft = parseFloat($after.style.clipPath?.match(/inset\(0 0 0 ([\d.]+)%\)/)?.[1] || 50);
+      e.preventDefault();
+    }
+    
+    function drag(e) {
+      if (!isDragging) return;
+      
+      const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+      const deltaX = clientX - startX;
+      const sliderWidth = $slider.offsetWidth;
+      const deltaPercent = (deltaX / sliderWidth) * 100;
+      const newLeft = Math.max(0, Math.min(100, startLeft - deltaPercent));
+      
+      updateSliderPosition(newLeft);
+      e.preventDefault();
+    }
+    
+    function stopDrag() {
+      isDragging = false;
+    }
+    
+    function updateSliderPosition(left) {
+      $after.style.clipPath = `inset(0 0 0 ${left}%)`;
+      $handle.style.left = `${left}%`;
+      
+      // ARIA 값 업데이트
+      $slider.setAttribute('aria-valuenow', Math.round(100 - left));
+    }
+    
+    // 초기 위치 설정
+    updateSliderPosition(50);
+  }
 
   console.log('🎉 Aqua.AI 앱 로딩 완료 (수정된 버전)!');
   console.log('💡 이제 presign API를 사용하지 않고 직접 업로드만 사용합니다!');

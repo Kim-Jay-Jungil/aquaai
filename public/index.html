@@ -76,6 +76,87 @@
       </div>
     </section>
 
+    <!-- Filter Examples Section -->
+    <section class="filter-examples">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">필터별 보정 효과 미리보기</h2>
+          <p class="section-subtitle">각 필터가 적용된 결과를 슬라이더로 확인해보세요</p>
+        </div>
+        
+        <div class="examples-grid">
+          <!-- 색상보정 예시 -->
+          <div class="example-item">
+            <h3 class="example-title">🎨 색상보정</h3>
+            <p class="example-description">블루/그린 톤 제거 및 자연스러운 색상 복원</p>
+            <div class="comparison-slider" id="colorComparisonSlider">
+              <div class="comparison-before">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%230ea5e9'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='20'%3E보정 전%3Cbr/%3E블루 톤%3C/text%3E%3C/svg%3E" alt="색상보정 전">
+                <span class="comparison-label">보정 전</span>
+              </div>
+              <div class="comparison-after">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%2312b8a6'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='20'%3E보정 후%3Cbr/%3E자연스러운 색%3C/text%3E%3C/svg%3E" alt="색상보정 후">
+                <span class="comparison-label">보정 후</span>
+              </div>
+              <div class="comparison-handle" id="colorHandle"></div>
+            </div>
+          </div>
+          
+          <!-- 부유물제거 예시 -->
+          <div class="example-item">
+            <h3 class="example-title">🧹 부유물제거</h3>
+            <p class="example-description">수중 부유물과 노이즈 자동 제거</p>
+            <div class="comparison-slider" id="debrisComparisonSlider">
+              <div class="comparison-before">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%238b5cf6'/%3E%3Ccircle cx='100' cy='100' r='20' fill='%23fbbf24'/%3E%3Ccircle cx='300' cy='200' r='15' fill='%23fbbf24'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='20'%3E보정 전%3Cbr/%3E부유물 있음%3C/text%3E%3C/svg%3E" alt="부유물제거 전">
+                <span class="comparison-label">보정 전</span>
+              </div>
+              <div class="comparison-after">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%238b5cf6'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='20'%3E보정 후%3Cbr/%3E깨끗함%3C/text%3E%3C/svg%3E" alt="부유물제거 후">
+                <span class="comparison-label">보정 후</span>
+              </div>
+              <div class="comparison-handle" id="debrisHandle"></div>
+            </div>
+          </div>
+          
+          <!-- 손떨림복원 예시 -->
+          <div class="example-item">
+            <h3 class="example-title">📷 손떨림복원</h3>
+            <p class="example-description">흔들린 이미지 안정화 및 선명도 향상</p>
+            <div class="comparison-slider" id="stabilizeComparisonSlider">
+              <div class="comparison-before">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f59e0b'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='20'%3E보정 전%3Cbr/%3E흔들림%3C/text%3E%3C/svg%3E" alt="손떨림복원 전">
+                <span class="comparison-label">보정 전</span>
+              </div>
+              <div class="comparison-after">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f59e0b'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='20'%3E보정 후%3Cbr/%3E안정화%3C/text%3E%3C/svg%3E" alt="손떨림복원 후">
+                <span class="comparison-label">보정 후</span>
+              </div>
+              <div class="comparison-handle" id="stabilizeHandle"></div>
+            </div>
+          </div>
+          
+          <!-- 슈퍼레졸루션 예시 -->
+          <div class="example-item">
+            <h3 class="example-title">🔍 슈퍼레졸루션</h3>
+            <p class="example-description">AI 기반 해상도 2배 향상 (프로 이상)</p>
+            <div class="comparison-slider" id="superResComparisonSlider">
+              <div class="comparison-before">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23ef4444'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16'%3E보정 전%3Cbr/%3E저해상도%3C/text%3E%3C/svg%3E" alt="슈퍼레졸루션 전">
+                <span class="comparison-label">보정 전</span>
+              </div>
+              <div class="comparison-after">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23ef4444'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='20'%3E보정 후%3Cbr/%3E고해상도%3C/text%3E%3C/svg%3E" alt="슈퍼레졸루션 후">
+                <span class="comparison-label">보정 후</span>
+              </div>
+              <div class="comparison-handle" id="superResHandle"></div>
+            </div>
+            <div class="pro-badge">PRO</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Upload Section -->
     <section class="upload-section" id="uploadSection">
       <div class="container">
@@ -101,37 +182,61 @@
           </div>
         </div>
         
-        <!-- 보정 강도 선택 -->
+        <!-- 보정 필터 선택 -->
         <div class="enhancement-options">
-          <h3 class="options-title">보정 강도</h3>
-          <div class="enhancement-controls">
-            <div class="slider-container">
-              <input 
-                type="range" 
-                id="enhancementSlider" 
-                min="0" 
-                max="100" 
-                value="50" 
-                class="enhancement-slider"
-                role="slider"
-                aria-label="보정 강도 조절"
-                aria-valuemin="0"
-                aria-valuemax="100"
-                aria-valuenow="50"
-              />
-              <div class="slider-labels">
-                <span>약</span>
-                <span>보통</span>
-                <span>강</span>
-              </div>
-            </div>
-            <div class="auto-toggle">
-              <label class="toggle-label">
-                <input type="checkbox" id="autoToggle" checked>
-                <span class="toggle-slider"></span>
-                <span class="toggle-text">AUTO</span>
+          <h3 class="options-title">보정 필터 선택</h3>
+          <p class="options-subtitle">원하는 효과를 선택하여 이미지를 보정하세요</p>
+          
+          <div class="filter-grid">
+            <div class="filter-item">
+              <label class="filter-checkbox">
+                <input type="checkbox" id="filterColor" checked>
+                <span class="filter-icon">🎨</span>
+                <div class="filter-content">
+                  <h4>색상보정</h4>
+                  <p>블루/그린 톤 제거 및 자연스러운 색상 복원</p>
+                </div>
               </label>
             </div>
+            
+            <div class="filter-item">
+              <label class="filter-checkbox">
+                <input type="checkbox" id="filterDebris">
+                <span class="filter-icon">🧹</span>
+                <div class="filter-content">
+                  <h4>부유물제거</h4>
+                  <p>수중 부유물과 노이즈 자동 제거</p>
+                </div>
+              </label>
+            </div>
+            
+            <div class="filter-item">
+              <label class="filter-checkbox">
+                <input type="checkbox" id="filterStabilize">
+                <span class="filter-icon">📷</span>
+                <div class="filter-content">
+                  <h4>손떨림복원</h4>
+                  <p>흔들린 이미지 안정화 및 선명도 향상</p>
+                </div>
+              </label>
+            </div>
+            
+            <div class="filter-item">
+              <label class="filter-checkbox">
+                <span class="filter-icon">🔍</span>
+                <div class="filter-content">
+                  <h4>슈퍼레졸루션</h4>
+                  <p>AI 기반 해상도 2배 향상</p>
+                  <small class="filter-note">프로 이상 이용 가능</small>
+                </div>
+                <input type="checkbox" id="filterSuperRes" disabled>
+              </label>
+            </div>
+          </div>
+          
+          <div class="filter-actions">
+            <button class="btn btn--tertiary" onclick="selectAllFilters()">모두 선택</button>
+            <button class="btn btn--tertiary" onclick="clearAllFilters()">모두 해제</button>
           </div>
         </div>
         
