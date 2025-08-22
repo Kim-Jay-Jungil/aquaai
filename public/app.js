@@ -99,6 +99,12 @@ document.addEventListener('DOMContentLoaded', function() {
       s3TestBtn.addEventListener('click', testS3);
     }
 
+    // CORS 테스트
+    const corsTestBtn = document.getElementById('corsTestBtn');
+    if (corsTestBtn) {
+      corsTestBtn.addEventListener('click', testCORS);
+    }
+
     // Notion 테스트
     const notionTestBtn = document.getElementById('notionTestBtn');
     if (notionTestBtn) {
@@ -726,13 +732,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // S3 테스트 함수
   async function testS3() {
+    showApiResult('S3 연결 테스트 중...', 'info');
+    
     try {
       const response = await fetch('/api/test-s3');
       const data = await response.json();
-      showAPITestResult('S3 테스트', response.status, data);
+      
+      if (response.ok && data.success) {
+        let resultText = `✅ S3 테스트 성공!\n\n`;
+        resultText += `전체 테스트: ${data.summary.total}개\n`;
+        resultText += `성공: ${data.summary.success}개\n`;
+        resultText += `실패: ${data.summary.failed}개\n\n`;
+        
+        // 개별 테스트 결과
+        data.tests.forEach(test => {
+          const status = test.status === 'success' ? '✅' : '❌';
+          resultText += `${status} ${test.name}: ${test.message}\n`;
+          if (test.error) {
+            resultText += `   오류: ${test.error}\n`;
+          }
+        });
+        
+        // 권장사항
+        if (data.recommendations && data.recommendations.length > 0) {
+          resultText += `\n💡 권장사항:\n${data.recommendations.join('\n')}`;
+        }
+        
+        showApiResult(resultText, data.overallStatus === 'success' ? 'success' : 'error');
+      } else {
+        showApiResult(`❌ S3 테스트 실패\n${data.message || '알 수 없는 오류'}`, 'error');
+      }
     } catch (error) {
-      showAPITestResult('S3 테스트', 0, { error: error.message });
+      showApiResult(`❌ 네트워크 오류\n${error.message}`, 'error');
     }
   }
 

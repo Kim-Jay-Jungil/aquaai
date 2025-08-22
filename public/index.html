@@ -317,6 +317,7 @@
           <button id="simpleApiBtn" class="btn btn--tertiary">간단 API 테스트</button>
           <button id="apiTestBtn" class="btn btn--tertiary">API 테스트</button>
           <button id="s3TestBtn" class="btn btn--tertiary">S3 테스트</button>
+          <button id="corsTestBtn" class="btn btn--tertiary">CORS 테스트</button>
           <button id="notionTestBtn" class="btn btn--tertiary">Notion 테스트</button>
           <button id="envCheckBtn" class="btn btn--tertiary">환경변수 확인</button>
         </div>
@@ -426,12 +427,14 @@
       const simpleApiBtn = document.getElementById('simpleApiBtn');
       const apiTestBtn = document.getElementById('apiTestBtn');
       const s3TestBtn = document.getElementById('s3TestBtn');
+      const corsTestBtn = document.getElementById('corsTestBtn');
       const envCheckBtn = document.getElementById('envCheckBtn');
       
       console.log('🔘 버튼 요소들:', {
         simpleApiBtn,
         apiTestBtn,
         s3TestBtn,
+        corsTestBtn,
         envCheckBtn
       });
       
@@ -495,6 +498,24 @@
           }
         });
         console.log('✅ S3 테스트 버튼 이벤트 리스너 추가됨');
+      }
+
+      if (corsTestBtn) {
+        corsTestBtn.addEventListener('click', async function() {
+          console.log('🔍 CORS 테스트 버튼 클릭됨');
+          const resultDiv = document.getElementById('apiTestResult');
+          resultDiv.style.display = 'block';
+          resultDiv.textContent = 'CORS 테스트 중...';
+          
+          try {
+            const response = await fetch('/api/cors-test');
+            const data = await response.json();
+            resultDiv.textContent = `✅ 성공: ${JSON.stringify(data, null, 2)}`;
+          } catch (error) {
+            resultDiv.textContent = `❌ 오류: ${error.message}`;
+          }
+        });
+        console.log('✅ CORS 테스트 버튼 이벤트 리스너 추가됨');
       }
       
       if (envCheckBtn) {
