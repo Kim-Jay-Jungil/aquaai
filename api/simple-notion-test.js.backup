@@ -1,5 +1,5 @@
 // api/simple-notion-test.js - 간단한 Notion 연결 테스트
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     console.log('🧪 간단한 Notion 테스트 시작');
     

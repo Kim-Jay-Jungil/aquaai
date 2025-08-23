@@ -1,5 +1,5 @@
 // check-notion-env.js - Notion 환경변수 상태 확인
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     const envStatus = {
       NOTION_API_KEY: {

@@ -32,7 +32,7 @@ async function readMultipart(req) {
   };
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     if (req.method !== 'POST') {
       return res.status(405).json({ ok: false, error: 'Method Not Allowed' });

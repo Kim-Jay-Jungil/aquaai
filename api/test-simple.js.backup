@@ -1,5 +1,5 @@
 // api/test-simple.js - 간단한 테스트용 API
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

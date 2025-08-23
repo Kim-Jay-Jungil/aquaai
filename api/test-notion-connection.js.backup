@@ -1,7 +1,7 @@
 // api/test-notion-connection.js - Notion 연결 테스트
 import { Client } from "@notionhq/client";
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     console.log('🧪 Notion 연결 테스트 시작');
     

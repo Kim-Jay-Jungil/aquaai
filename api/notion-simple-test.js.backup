@@ -1,5 +1,5 @@
 // api/notion-simple-test.js - 가장 기본적인 Notion 테스트
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     console.log('🧪 Notion 간단 테스트 시작');
     

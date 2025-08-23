@@ -1,5 +1,5 @@
 // api/debug-env.js - 환경 변수 디버깅용
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }

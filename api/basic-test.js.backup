@@ -1,5 +1,5 @@
 // api/basic-test.js - 가장 기본적인 테스트
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   try {
     console.log('🧪 기본 테스트 시작');
     

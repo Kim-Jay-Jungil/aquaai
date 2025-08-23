@@ -1,5 +1,5 @@
 // api/ping.js - 가장 간단한 API 테스트
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   // CORS 헤더 설정
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
